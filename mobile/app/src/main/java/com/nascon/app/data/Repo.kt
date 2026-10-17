@@ -6,13 +6,14 @@ import kotlinx.serialization.json.jsonObject
 data class Loaded(val data: JsonObject, val savedAt: Long, val fromCache: Boolean)
 
 /** Network first, Room cache as fallback. Every successful read refreshes the cache. */
-class Repo(private val api: Api, private val db: AppDb, private val session: Session) {
+class Repo(private val api: Api, private val db: AppDb, private val session: Session, private val online: () -> Boolean) {
     private fun key(path: String) = (session.current?.user?.email ?: "anon") + "|" + path
 
     suspend fun cached(path: String): Loaded? =
         db.cache().get(key(path))?.let { Loaded(json.parseToJsonElement(it.body).jsonObject, it.savedAt, true) }
 
     suspend fun load(path: String): Loaded {
+        if (!online()) cached(path)?.let { return it }
         return try {
             val data = api.get(path)
             val now = System.currentTimeMillis()

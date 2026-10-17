@@ -22,7 +22,7 @@ class Graph(context: Context) {
     val session = Session(secure).apply { restore() }
     val api = Api(settings) { session.current?.token }
     val db = Room.databaseBuilder(context, AppDb::class.java, "nascon.db").build()
-    val repo = Repo(api, db, session)
+    val repo = Repo(api, db, session) { network.online.value }
     val sync = SyncManager(context, api, db, session, settings)
     val network = NetworkMonitor(context) { sync.schedule() }.also { sync.network = it }
     val cart = mutableStateListOf<CartLine>()
