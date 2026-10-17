@@ -107,3 +107,10 @@ async def checkout(request: Request):
 async def inventory(variant_id: str):
     from ..services import store
     return respond(200, await run_in_threadpool(store.inventory, variant_id))
+
+
+@router.post("/audit/v1/offline-sync")
+async def offline_sync(request: Request):
+    from ..services import sync
+    body = await read_object(request)
+    return respond(200, await run_in_threadpool(sync.replay, body))

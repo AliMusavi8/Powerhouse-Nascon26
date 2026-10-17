@@ -60,8 +60,8 @@ Legend: `[x]` done · `[ ]` pending
 - [x] Matrix tests
 
 ## Phase 7: Offline sync (NFR-4)
-- [ ] `POST /audit/v1/offline-sync` (ordering, duplicates, versions, conflict resolution)
-- [ ] Tests
+- [x] `POST /audit/v1/offline-sync` (ordering, duplicates, versions, conflict resolution)
+- [x] Tests
 
 ## Phase 8: Production API for the app
 - [ ] Auth login + `/me`
