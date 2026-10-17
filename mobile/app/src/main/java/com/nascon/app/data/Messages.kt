@@ -6,6 +6,7 @@ object Messages {
 
     private val map = mapOf(
         "UNAUTHORIZED" to "Your session has ended. Please sign in again.",
+        "UNAUTHENTICATED" to "Your session has ended. Please sign out and sign in again.",
         "INVALID_CREDENTIALS" to "That email and password don't match.",
         "FORBIDDEN" to "Your account isn't allowed to do this.",
         "NOT_FOUND" to "We couldn't find that.",
