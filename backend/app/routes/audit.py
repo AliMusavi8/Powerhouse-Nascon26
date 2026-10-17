@@ -38,3 +38,24 @@ async def fixtures(request: Request):
     from ..domain.fixtures import generate
     body = await read_object(request)
     return respond(200, await run_in_threadpool(generate, body))
+
+
+@router.post("/audit/v1/sports")
+async def create_sport(request: Request):
+    from ..services import sports as sports_service
+    body = await read_object(request)
+    return respond(201, await run_in_threadpool(sports_service.create, body))
+
+
+@router.post("/audit/v1/events")
+async def append_event(request: Request):
+    from ..services import matches
+    body = await read_object(request)
+    status, result = await run_in_threadpool(matches.append_event, body)
+    return respond(status, result)
+
+
+@router.get("/audit/v1/score/{match_id}")
+async def get_score(match_id: str):
+    from ..services import matches
+    return respond(200, await run_in_threadpool(matches.score, match_id))

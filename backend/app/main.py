@@ -19,6 +19,13 @@ app = FastAPI(title="NaSCon League Platform", version="1.0.0")
 
 
 @app.on_event("startup")
+async def _bind_realtime() -> None:
+    import asyncio
+    from .services import realtime
+    realtime.bind_loop(asyncio.get_running_loop())
+
+
+@app.on_event("startup")
 def _startup() -> None:
     db.wait_for_db()
     db.create_schema()

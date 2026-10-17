@@ -26,11 +26,11 @@ Legend: `[x]` done · `[ ]` pending
 - [x] Unit tests
 
 ## Phase 2: Sports & scoring (FR-1.1)
-- [ ] Sport config validation (event / innings / round) + `POST /audit/v1/sports`
-- [ ] Match streams + append-only event log (per-match lock, idempotency, signatures)
-- [ ] Event rules (state machine, limits, compensation, tie-break)
-- [ ] Score projection `GET /audit/v1/score/{match_id}`
-- [ ] Unit tests
+- [x] Sport config validation (event / innings / round) + `POST /audit/v1/sports`
+- [x] Match streams + append-only event log (per-match lock, idempotency, signatures)
+- [x] Event rules (state machine, limits, compensation, tie-break)
+- [x] Score projection `GET /audit/v1/score/{match_id}`
+- [x] Unit tests
 
 ## Phase 3: Standings (FR-1.4)
 - [ ] `POST /audit/v1/leagues`
