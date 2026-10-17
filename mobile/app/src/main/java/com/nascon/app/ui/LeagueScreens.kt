@@ -30,8 +30,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.TableRows
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
@@ -104,16 +102,13 @@ fun FixturesScreen() {
     var picked by rememberSaveable(league.leagueId) { mutableStateOf<String?>(null) }
     val day = picked?.takeIf { it in days } ?: days.firstOrNull { it >= today } ?: days.lastOrNull()
     val dayState = rememberLazyListState()
-    LaunchedEffect(days.size, day) { days.indexOf(day).takeIf { it > 0 }?.let { dayState.animateScrollToItem(maxOf(0, it - 1)) } }
+    LaunchedEffect(days.size) { days.indexOf(day).takeIf { it > 1 }?.let { dayState.scrollToItem(it - 1) } }
 
     Page(
         "Scores & Fixtures", savedAt = res.loaded?.savedAt,
         hero = {
             LeaguePicker(leagues)
-            if (days.isNotEmpty()) Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                val idx = days.indexOf(day)
-                ArrowPill(Icons.AutoMirrored.Filled.KeyboardArrowLeft, "Previous day", idx > 0) { picked = days[idx - 1] }
-                LazyRow(state = dayState, horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.weight(1f)) {
+            if (days.isNotEmpty()) LazyRow(state = dayState, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
                 items(days) { d ->
                     val date = runCatching { java.time.LocalDate.parse(d) }.getOrNull()
                     val live = fixtures.any { dayKey(parseTime(it.str("scheduled_at"))) == d && it.str("status") == "in_progress" }
@@ -123,8 +118,6 @@ fun FixturesScreen() {
                         selected = d == day, mark = live, onClick = { picked = d },
                     )
                 }
-                }
-                ArrowPill(Icons.AutoMirrored.Filled.KeyboardArrowRight, "Next day", idx in 0 until days.lastIndex) { picked = days[idx + 1] }
             }
         },
     ) {
@@ -165,26 +158,24 @@ fun MatchCard(f: JsonObject, onClick: () -> Unit) {
         append("${home?.str("name")} versus ${away?.str("name")}. ")
         append(when (status) { "in_progress" -> "Live, $hs to $aws"; "completed" -> "Full time, $hs to $aws"; else -> "Starts ${dayLabel(t)} at ${clock(t)}" })
     }
-    WaveCard(
-        Modifier.semantics(mergeDescendants = true) { contentDescription = desc }, onClick = onClick,
-        badge = {
+    BigCard(Modifier.semantics(mergeDescendants = true) { contentDescription = desc }, onClick = onClick, wave = true) {
+        Column(Modifier.fillMaxWidth().padding(vertical = 14.dp, horizontal = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             when (status) {
                 "in_progress" -> BadgePill("Live", dot = true)
-                "completed" -> BadgePill("Full time")
-                else -> BadgePill(clock(t))
+                "completed" -> BadgePill("Full time", inverted = false)
+                else -> BadgePill(clock(t), inverted = false)
             }
-        },
-    ) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            TeamBlock(home?.str("name") ?: "To be decided", Modifier.weight(1f))
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(100.dp)) {
-                Text(if (status == "upcoming") "vs" else "${hs ?: 0}-${aws ?: 0}", style = ScoreStyle, fontSize = 30.sp)
-                Text(if (status == "upcoming") dayLabel(t) else (if (status == "completed") "Final score" else "In play"),
-                    fontSize = 12.sp, color = extra.muted, textAlign = TextAlign.Center)
+            Row(Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                TeamBlock(home?.str("name") ?: "To be decided", Modifier.weight(1f))
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(96.dp)) {
+                    Text(if (status == "upcoming") "vs" else "${hs ?: 0}-${aws ?: 0}", style = ScoreStyle, fontSize = 30.sp)
+                    Text(if (status == "upcoming") dayLabel(t) else (if (status == "completed") "Final" else "In play"),
+                        fontSize = 12.sp, color = extra.muted, textAlign = TextAlign.Center)
+                }
+                TeamBlock(away?.str("name") ?: "To be decided", Modifier.weight(1f))
             }
-            TeamBlock(away?.str("name") ?: "To be decided", Modifier.weight(1f))
+            f.str("venue")?.let { Text(it, fontSize = 12.sp, color = extra.muted, modifier = Modifier.padding(top = 10.dp)) }
         }
-        f.str("venue")?.let { Text(it, fontSize = 12.sp, color = extra.muted, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) }
     }
 }
 
