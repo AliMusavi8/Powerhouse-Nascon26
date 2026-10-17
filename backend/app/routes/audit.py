@@ -31,3 +31,10 @@ async def reset(request: Request):
         raise validation("stock")
     result = await run_in_threadpool(seed.reset, seed_value, stock)
     return respond(200, result)
+
+
+@router.post("/audit/v1/fixtures")
+async def fixtures(request: Request):
+    from ..domain.fixtures import generate
+    body = await read_object(request)
+    return respond(200, await run_in_threadpool(generate, body))

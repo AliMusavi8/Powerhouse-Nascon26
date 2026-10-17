@@ -18,12 +18,12 @@ Legend: `[x]` done · `[ ]` pending
 - [x] First commit + push
 
 ## Phase 1: Fixtures (FR-1.3)
-- [ ] Round robin (circle method, byes, legs, withdrawals forfeit/void, summary)
-- [ ] Swiss (exact R1, standings + Buchholz, bye selection, min-diff rematch-free matching, NO_VALID_PAIRING)
-- [ ] Single elimination (seed order, byes, results propagation, third place)
-- [ ] Double elimination (WR/LR/GF routing, counts, GF2 conditional/required)
-- [ ] `POST /audit/v1/fixtures` validation + limits
-- [ ] Unit tests
+- [x] Round robin (circle method, byes, legs, withdrawals forfeit/void, summary)
+- [x] Swiss (exact R1, standings + Buchholz, bye selection, min-diff rematch-free matching, NO_VALID_PAIRING)
+- [x] Single elimination (seed order, byes, results propagation, third place)
+- [x] Double elimination (WR/LR/GF routing, counts, GF2 conditional/required)
+- [x] `POST /audit/v1/fixtures` validation + limits
+- [x] Unit tests
 
 ## Phase 2: Sports & scoring (FR-1.1)
 - [ ] Sport config validation (event / innings / round) + `POST /audit/v1/sports`
