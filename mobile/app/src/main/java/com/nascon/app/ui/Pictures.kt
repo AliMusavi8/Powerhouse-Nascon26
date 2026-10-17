@@ -92,13 +92,9 @@ fun ClubBadge(name: String, size: Int = 56) {
 @Composable
 fun Avatar(name: String, size: Int = 64) {
     val (main, accent) = kitFor(name + "#p")
-    Box(
-        Modifier.size(size.dp).clip(CircleShape)
-            .background(Brush.linearGradient(listOf(main, main.copy(alpha = 0.75f), accent.copy(alpha = 0.9f))))
-            .semantics { contentDescription = "Profile picture of $name" },
-        contentAlignment = Alignment.Center,
-    ) {
-        Canvas(Modifier.fillMaxSize()) {
+    Box(Modifier.size(size.dp).semantics { contentDescription = "Profile picture of $name" }) {
+        Canvas(Modifier.fillMaxSize().clip(CircleShape)
+            .background(Brush.linearGradient(listOf(main, main.copy(alpha = 0.75f), accent.copy(alpha = 0.9f))))) {
             val w = this.size.width
             val h = this.size.height
             drawCircle(Color.White.copy(alpha = 0.92f), radius = w * 0.18f, center = Offset(w / 2f, h * 0.38f))
