@@ -107,3 +107,73 @@ fun Avatar(name: String, size: Int = 64) {
         ) { Text(initials(name), color = Color.White, fontWeight = FontWeight.Bold, fontSize = (size * 0.13).sp) }
     }
 }
+
+/**
+ * Product picture drawn from the product's category and name, in kit colours.
+ * Shapes: shirt (default apparel), cap, scarf, and a phone screen for digital items.
+ */
+@Composable
+fun ProductArt(product: kotlinx.serialization.json.JsonObject?, modifier: Modifier = Modifier) {
+    val name = (product?.get("name") as? kotlinx.serialization.json.JsonPrimitive)?.content ?: ""
+    val category = (product?.get("category") as? kotlinx.serialization.json.JsonPrimitive)?.content ?: ""
+    val (main, accent) = kitFor(name)
+    val n = name.lowercase()
+    val kind = when {
+        category.contains("digital", true) -> 3
+        n.contains("cap") || n.contains("hat") -> 1
+        n.contains("scarf") -> 2
+        else -> 0
+    }
+    Box(
+        modifier.background(Brush.linearGradient(listOf(main.copy(alpha = 0.16f), accent.copy(alpha = 0.28f))))
+            .semantics { contentDescription = "Picture of $name" },
+        contentAlignment = Alignment.Center,
+    ) {
+        Canvas(Modifier.fillMaxSize(0.72f)) {
+            val w = this.size.width
+            val h = this.size.height
+            val s = minOf(w, h)
+            val ox = (w - s) / 2f
+            val oy = (h - s) / 2f
+            fun p(x: Float, y: Float) = Offset(ox + x * s, oy + y * s)
+            when (kind) {
+                0 -> { // shirt
+                    val shirt = Path().apply {
+                        moveTo(p(0.35f, 0.08f).x, p(0.35f, 0.08f).y)
+                        quadraticTo(p(0.5f, 0.2f).x, p(0.5f, 0.2f).y, p(0.65f, 0.08f).x, p(0.65f, 0.08f).y)
+                        lineTo(p(0.95f, 0.22f).x, p(0.95f, 0.22f).y); lineTo(p(0.85f, 0.42f).x, p(0.85f, 0.42f).y)
+                        lineTo(p(0.75f, 0.37f).x, p(0.75f, 0.37f).y); lineTo(p(0.75f, 0.95f).x, p(0.75f, 0.95f).y)
+                        lineTo(p(0.25f, 0.95f).x, p(0.25f, 0.95f).y); lineTo(p(0.25f, 0.37f).x, p(0.25f, 0.37f).y)
+                        lineTo(p(0.15f, 0.42f).x, p(0.15f, 0.42f).y); lineTo(p(0.05f, 0.22f).x, p(0.05f, 0.22f).y); close()
+                    }
+                    drawPath(shirt, main)
+                    drawLine(accent, p(0.42f, 0.2f), p(0.42f, 0.95f), strokeWidth = s * 0.05f)
+                    drawLine(accent, p(0.58f, 0.2f), p(0.58f, 0.95f), strokeWidth = s * 0.05f)
+                    drawPath(shirt, Color.Black.copy(alpha = 0.15f), style = Stroke(width = s * 0.015f))
+                }
+                1 -> { // cap
+                    drawArc(main, 180f, 180f, true, p(0.14f, 0.2f), androidx.compose.ui.geometry.Size(s * 0.72f, s * 0.72f))
+                    drawRoundRect(accent, p(0.42f, 0.5f), androidx.compose.ui.geometry.Size(s * 0.52f, s * 0.1f), androidx.compose.ui.geometry.CornerRadius(s * 0.05f))
+                    drawCircle(accent, s * 0.04f, p(0.5f, 0.2f))
+                    drawLine(accent, p(0.5f, 0.22f), p(0.5f, 0.55f), strokeWidth = s * 0.02f)
+                }
+                2 -> { // scarf
+                    for (i in 0 until 6) {
+                        val c = if (i % 2 == 0) main else accent
+                        drawRect(c, p(0.06f + i * 0.148f, 0.36f), androidx.compose.ui.geometry.Size(s * 0.149f, s * 0.26f))
+                    }
+                    for (i in 0 until 8) {
+                        drawLine(main, p(0.08f + i * 0.12f, 0.62f), p(0.08f + i * 0.12f, 0.72f), strokeWidth = s * 0.02f)
+                        drawLine(main, p(0.08f + i * 0.12f, 0.36f), p(0.08f + i * 0.12f, 0.26f), strokeWidth = s * 0.02f)
+                    }
+                }
+                else -> { // phone wallpaper
+                    drawRoundRect(Color(0xFF111111), p(0.28f, 0.04f), androidx.compose.ui.geometry.Size(s * 0.44f, s * 0.92f), androidx.compose.ui.geometry.CornerRadius(s * 0.07f))
+                    drawRoundRect(Brush.linearGradient(listOf(main, accent), p(0.31f, 0.08f), p(0.69f, 0.92f)), p(0.31f, 0.08f),
+                        androidx.compose.ui.geometry.Size(s * 0.38f, s * 0.84f), androidx.compose.ui.geometry.CornerRadius(s * 0.05f))
+                    drawCircle(Color.White.copy(alpha = 0.85f), s * 0.08f, p(0.5f, 0.45f))
+                }
+            }
+        }
+    }
+}

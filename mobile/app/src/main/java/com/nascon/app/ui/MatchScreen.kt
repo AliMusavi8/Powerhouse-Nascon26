@@ -261,9 +261,7 @@ private fun PinnedProduct(p: JsonObject, onBuy: () -> Unit) {
     SectionLabel("Pinned by the club")
     BigCard(onClick = onBuy) {
         Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Box(Modifier.size(56.dp).clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)), contentAlignment = Alignment.Center) {
-                Icon(Icons.Filled.ShoppingBag, null, tint = MaterialTheme.colorScheme.primary)
-            }
+            ProductArt(p, Modifier.size(64.dp).clip(RoundedCornerShape(18.dp)))
             Column(Modifier.weight(1f)) {
                 Text(p.str("name") ?: "", fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(money(v?.long("price_minor"), v?.str("currency")), color = extra.muted)

@@ -131,9 +131,7 @@ fun StoreScreen() {
                             .clickable(onClickLabel = "Open product") { ui.nav.navigate("product/${p.str("product_id")}") }
                             .padding(horizontal = 16.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Box(Modifier.size(56.dp).clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
-                                Icon(Icons.Filled.ShoppingBag, null, tint = extra.muted)
-                            }
+                            ProductArt(p, Modifier.size(72.dp).clip(RoundedCornerShape(18.dp)))
                             Column(Modifier.weight(1f)) {
                                 Text(p.str("name") ?: "", fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 Text((if (vs.size > 1) "From " else "") + money(min, vs.firstOrNull()?.str("currency")), style = NumStyle, color = extra.muted)
@@ -166,9 +164,7 @@ fun ProductScreen(productId: String) {
             val stock = v?.int("stock") ?: 0
             Column(Modifier.fillMaxSize()) {
                 Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-                    Box(Modifier.fillMaxWidth().aspectRatio(2f).background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
-                        Icon(Icons.Filled.ShoppingBag, contentDescription = null, tint = extra.muted, modifier = Modifier.size(64.dp))
-                    }
+                    ProductArt(p, Modifier.fillMaxWidth().aspectRatio(1.6f).padding(16.dp).clip(RoundedCornerShape(28.dp)))
                     Column(Modifier.fillMaxWidth().cardRow().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(p.str("name") ?: "", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
@@ -249,6 +245,7 @@ fun CartScreen() {
                 g.cart.toList().forEachIndexed { i, line ->
                     Row(Modifier.fillMaxWidth().cardRow().padding(start = 16.dp, top = 8.dp, bottom = 8.dp),
                         verticalAlignment = Alignment.CenterVertically) {
+                        ProductArt(line.product, Modifier.padding(end = 12.dp).size(52.dp).clip(RoundedCornerShape(14.dp)))
                         Column(Modifier.weight(1f)) {
                             Text(line.product.str("name") ?: "", fontWeight = FontWeight.Medium)
                             Text("${attrShort(line.variant)} · ${line.quantity} × ${money(line.variant.long("price_minor"), currency)}", fontSize = 12.sp, color = extra.muted)
