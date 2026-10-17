@@ -33,11 +33,11 @@ Legend: `[x]` done · `[ ]` pending
 - [x] Unit tests
 
 ## Phase 3: Standings (FR-1.4)
-- [ ] `POST /audit/v1/leagues`
-- [ ] Table, points, diffs (event/round/NRR)
-- [ ] `resolve(group)` with H2H mini-league + draw lots + `resolved_by`
-- [ ] Qualification status + H2H matrix
-- [ ] Unit tests
+- [x] `POST /audit/v1/leagues`
+- [x] Table, points, diffs (event/round/NRR)
+- [x] `resolve(group)` with H2H mini-league + draw lots + `resolved_by`
+- [x] Qualification status + H2H matrix
+- [x] Unit tests
 
 ## Phase 4: Roster (FR-2.2)
 - [ ] `POST /audit/v1/roster/setup`

@@ -59,3 +59,16 @@ async def append_event(request: Request):
 async def get_score(match_id: str):
     from ..services import matches
     return respond(200, await run_in_threadpool(matches.score, match_id))
+
+
+@router.post("/audit/v1/leagues")
+async def register_league(request: Request):
+    from ..services import leagues
+    body = await read_object(request)
+    return respond(201, await run_in_threadpool(leagues.register, body))
+
+
+@router.get("/audit/v1/standings/{league_id}")
+async def get_standings(league_id: str):
+    from ..services import leagues
+    return respond(200, await run_in_threadpool(leagues.standings, league_id))
