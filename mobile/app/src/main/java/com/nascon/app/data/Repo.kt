@@ -21,7 +21,12 @@ class Repo(private val api: Api, private val db: AppDb, private val session: Ses
             Loaded(data, now, false)
         } catch (e: ApiError) {
             if (e.isNetwork) cached(path)?.let { return it }
-            if (e.isNetwork) throw ApiError(e.code, "You're offline and this hasn't been saved on this phone yet.", 0)
+            if (e.isNetwork) throw ApiError(
+                e.code,
+                if (online()) Messages.NETWORK + " Nothing is saved on this phone for this page yet."
+                else "You're offline and this hasn't been saved on this phone yet.",
+                0,
+            )
             throw e
         }
     }
