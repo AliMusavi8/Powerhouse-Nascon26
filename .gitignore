@@ -1,0 +1,22 @@
+.env
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+.venv/
+venv/
+
+# Android
+mobile/.gradle/
+mobile/.kotlin/
+mobile/build/
+mobile/app/build/
+mobile/local.properties
+mobile/.idea/
+*.iml
+!mobile/release/app-release.apk
+
+# Competition handout
+/*.pdf

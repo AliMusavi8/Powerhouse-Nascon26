@@ -1,0 +1,62 @@
+{
+  "tenants": [
+    { "tenant_id": "tenant-alpha", "name": "Alpha Sports",
+      "branding": { "primary_color": "#1E4FD8", "secondary_color": "#F5B700", "logo_text": "AS" } },
+    { "tenant_id": "tenant-beta", "name": "Beta Athletics",
+      "branding": { "primary_color": "#0F8A5F", "secondary_color": "#E4572E", "logo_text": "BA" } }
+  ],
+  "leagues": [
+    { "league_id": "league-alpha-1", "tenant_id": "tenant-alpha", "sport_id": "football", "name": "Alpha Premier League" },
+    { "league_id": "league-alpha-2", "tenant_id": "tenant-alpha", "sport_id": "basketball", "name": "Alpha Hoops Cup" },
+    { "league_id": "league-beta-1", "tenant_id": "tenant-beta", "sport_id": "football", "name": "Beta Super League" }
+  ],
+  "clubs": [
+    { "club_id": "club-alpha-1", "tenant_id": "tenant-alpha", "league_id": "league-alpha-1", "name": "Alpha United",
+      "profile": { "home_venue": { "name": "Alpha Arena", "lat": 33.6844, "lng": 73.0479 },
+                   "socials": { "x": "@alphaunited", "instagram": "@alphaunited" },
+                   "staff": [ { "role": "coach", "name": "Imran Qadir" }, { "role": "manager", "name": "Sara Malik" },
+                              { "role": "physio", "name": "Dr. Hamza Ali" } ],
+                   "history": [ { "season": "2025", "position": 2, "points": 61 }, { "season": "2024", "position": 4, "points": 52 } ] } },
+    { "club_id": "club-alpha-2", "tenant_id": "tenant-alpha", "league_id": "league-alpha-1", "name": "Alpha City",
+      "profile": { "home_venue": { "name": "City Ground", "lat": 33.7, "lng": 73.06 },
+                   "socials": { "x": "@alphacity" },
+                   "staff": [ { "role": "coach", "name": "Usman Tariq" }, { "role": "manager", "name": "Ayesha Noor" },
+                              { "role": "physio", "name": "Bilal Shah" } ],
+                   "history": [ { "season": "2025", "position": 5, "points": 48 } ] } },
+    { "club_id": "club-beta-1", "tenant_id": "tenant-beta", "league_id": "league-beta-1", "name": "Beta Rangers",
+      "profile": { "home_venue": { "name": "Beta Park", "lat": 31.52, "lng": 74.35 },
+                   "socials": { "x": "@betarangers" },
+                   "staff": [ { "role": "coach", "name": "Kamran Akmal" } ],
+                   "history": [] } }
+  ],
+  "players": [
+    { "player_id": "player-alpha-1", "tenant_id": "tenant-alpha", "club_id": "club-alpha-1", "name": "Ali Raza",
+      "profile": { "position": "fw", "role": "captain", "number": 9 } },
+    { "player_id": "player-alpha-2", "tenant_id": "tenant-alpha", "club_id": "club-alpha-2", "name": "Bilal Ahmed",
+      "profile": { "position": "gk", "role": "starter", "number": 1 } },
+    { "player_id": "player-beta-1", "tenant_id": "tenant-beta", "club_id": "club-beta-1", "name": "Chaudhry Fahad",
+      "profile": { "position": "df", "role": "starter", "number": 4 } }
+  ],
+  "products": [
+    { "product_id": "prod-jersey-001", "tenant_id": "tenant-alpha", "club_id": "club-alpha-1",
+      "data": { "name": "Alpha United Home Jersey 2026", "category": "apparel",
+                "description": "Official home jersey, breathable fabric." },
+      "variants": [
+        { "variant_id": "var-jersey-001-M", "price_minor": 450000, "attributes": { "size": "M", "color": "Blue" } },
+        { "variant_id": "var-jersey-001-L", "price_minor": 450000, "attributes": { "size": "L", "color": "Blue" } }
+      ] }
+  ],
+  "discount_codes": [ { "code": "WELCOME10", "percent": 10 } ],
+  "users": [
+    { "user_id": "u-admin", "email": "admin@nascon.test", "name": "Platform Admin", "role": "super_admin" },
+    { "user_id": "u-organizer", "email": "organizer@nascon.test", "name": "League Organizer", "role": "league_organizer",
+      "tenant_id": "tenant-alpha", "league_id": "league-alpha-1" },
+    { "user_id": "u-manager", "email": "manager@nascon.test", "name": "Club Manager", "role": "club_manager",
+      "tenant_id": "tenant-alpha", "club_id": "club-alpha-1" },
+    { "user_id": "u-player", "email": "player@nascon.test", "name": "Ali Raza", "role": "player",
+      "tenant_id": "tenant-alpha", "club_id": "club-alpha-1", "player_id": "player-alpha-1" },
+    { "user_id": "u-viewer", "email": "viewer@nascon.test", "name": "General Viewer", "role": "viewer",
+      "tenant_id": "tenant-alpha" }
+  ],
+  "demo_password": "Nascon@26"
+}
