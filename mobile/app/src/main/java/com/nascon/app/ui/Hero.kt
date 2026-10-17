@@ -141,24 +141,27 @@ fun Page(
                 Column(Modifier.fillMaxWidth().statusBarsPadding().padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 20.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         if (back) CircleButton(Icons.AutoMirrored.Filled.ArrowBack, "Back", { ui.nav.popBackStack() })
-                        else Box {
+                        else Box(
+                            Modifier.size(48.dp).clip(CircleShape).background(Color.White).border(3.dp, extra.gold, CircleShape)
+                                .semantics { contentDescription = "${ui.session.branding.name} logo" },
+                            contentAlignment = Alignment.Center,
+                        ) { Text(ui.session.branding.logoText, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 17.sp) }
+                        if (!back && logoMenu != null) Box(Modifier.weight(1f, fill = false)) {
                             var open by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
-                            Box(
-                                Modifier.size(48.dp).clip(CircleShape).background(Color.White).border(3.dp, extra.gold, CircleShape)
-                                    .let { m -> if (logoMenu != null) m.clickable(onClickLabel = "Choose league", role = Role.Button) { open = true } else m }
-                                    .semantics { contentDescription = if (logoMenu != null) "${ui.session.branding.name}. Choose league" else "${ui.session.branding.name} logo" },
-                                contentAlignment = Alignment.Center,
-                            ) { Text(ui.session.branding.logoText, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 17.sp) }
-                            if (logoMenu != null) {
-                                Box(
-                                    Modifier.align(Alignment.BottomEnd).size(18.dp).clip(CircleShape).background(extra.ink),
-                                    contentAlignment = Alignment.Center,
-                                ) { Icon(Icons.Filled.KeyboardArrowDown, null, tint = extra.onInk, modifier = Modifier.size(14.dp)) }
-                                androidx.compose.material3.DropdownMenu(
-                                    expanded = open, onDismissRequest = { open = false },
-                                    shape = RoundedCornerShape(20.dp), containerColor = MaterialTheme.colorScheme.surface,
-                                ) { logoMenu { open = false } }
+                            Row(
+                                Modifier.heightIn(min = 44.dp).clip(RoundedCornerShape(50)).border(1.dp, HeroLine, RoundedCornerShape(50))
+                                    .clickable(onClickLabel = "Choose league", role = Role.Button) { open = true }
+                                    .padding(start = 14.dp, end = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                Text(subtitle ?: "Choose league", color = OnHero, fontSize = 14.sp, fontWeight = FontWeight.Medium,
+                                    maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                                Icon(Icons.Filled.KeyboardArrowDown, null, tint = OnHero, modifier = Modifier.size(20.dp))
                             }
+                            androidx.compose.material3.DropdownMenu(
+                                expanded = open, onDismissRequest = { open = false },
+                                shape = RoundedCornerShape(20.dp), containerColor = MaterialTheme.colorScheme.surface,
+                            ) { logoMenu { open = false } }
                         }
                         if (back) Text(title, color = OnHero, fontSize = 16.sp, fontWeight = FontWeight.Medium, maxLines = 1,
                             overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
@@ -168,7 +171,7 @@ fun Page(
                     }
                     if (!back) Text(title, color = OnHero, fontSize = 26.sp, fontWeight = FontWeight.Bold, maxLines = 2,
                         overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 18.dp))
-                    if (!back && subtitle != null) Text(subtitle, color = OnHero.copy(alpha = 0.8f), fontSize = 14.sp, maxLines = 1,
+                    if (!back && subtitle != null && logoMenu == null) Text(subtitle, color = OnHero.copy(alpha = 0.8f), fontSize = 14.sp, maxLines = 1,
                         overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp))
                     if (hero != null) Column(Modifier.padding(top = 16.dp)) { hero() }
                 }
