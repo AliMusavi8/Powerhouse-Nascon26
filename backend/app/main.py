@@ -11,7 +11,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import config, db, seed
 from .errors import ApiError
-from .routes import audit
+from .routes import api, audit, rbac
 
 log = logging.getLogger("nascon")
 
@@ -101,3 +101,5 @@ async def _rate_limit(request: Request, call_next):
 
 
 app.include_router(audit.router)
+app.include_router(rbac.router)
+app.include_router(api.router)

@@ -53,11 +53,11 @@ Legend: `[x]` done · `[ ]` pending
 - [x] 20-thread concurrency test
 
 ## Phase 6: RBAC & security (FR-5.1, NFR-5)
-- [ ] JWT issue/verify (reject alg:none, tampered, expired)
-- [ ] Policy matrix + 7 probe routes
-- [ ] `POST /audit/v1/rbac-matrix`
-- [ ] Rate limiter on `/api/v1/*` + `GET /api/v1/ping`
-- [ ] Matrix tests
+- [x] JWT issue/verify (reject alg:none, tampered, expired)
+- [x] Policy matrix + 7 probe routes
+- [x] `POST /audit/v1/rbac-matrix`
+- [x] Rate limiter on `/api/v1/*` + `GET /api/v1/ping`
+- [x] Matrix tests
 
 ## Phase 7: Offline sync (NFR-4)
 - [ ] `POST /audit/v1/offline-sync` (ordering, duplicates, versions, conflict resolution)
