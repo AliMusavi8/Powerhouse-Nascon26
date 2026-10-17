@@ -1,10 +1,10 @@
-# Powerhouse: NaSCon '26 League & Club Operations Platform
+# Powerhouse: NaSCon '26 League & Club Operations Platform.
 
 Multi-tenant sports league and club-operations platform. It has two parts:
 - a self-hosted backend: REST API, WebSocket live updates, an event-sourced scoring engine and a Redis Streams job queue;
 - an Android app written in Kotlin with Jetpack Compose, with an offline cache and a sync queue.
 
-## Run the backend
+## Run the backend:
 
 Requirements: Docker Engine 24+ with Compose v2. Nothing else is needed on the host.
 
