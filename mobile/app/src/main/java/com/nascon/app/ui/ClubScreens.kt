@@ -119,7 +119,7 @@ fun ClubScreen(clubId: String, back: Boolean) {
             ResBox(res) { l ->
                 val c = l.data
                 Column(Modifier.fillMaxSize()) {
-                    Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(16.dp),
+                    Row(Modifier.fillMaxWidth().cardRow().padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                         Crest(c.str("name") ?: "", 48)
                         Column {
@@ -211,7 +211,7 @@ private fun Roster(c: JsonObject, clubId: String, canManage: Boolean, pending: S
         items(roster, key = { it.str("player_id") ?: "" }) { p ->
             var menu by remember { mutableStateOf(false) }
             val pid = p.str("player_id") ?: ""
-            Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).heightIn(min = 56.dp).padding(start = 16.dp),
+            Row(Modifier.fillMaxWidth().cardRow().heightIn(min = 56.dp).padding(start = 16.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text((p.str("position") ?: "").uppercase().take(3), style = NumStyle, color = extra.muted, modifier = Modifier.width(34.dp))
                 Column(Modifier.weight(1f).padding(vertical = 8.dp)) {

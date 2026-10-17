@@ -158,7 +158,7 @@ fun MatchCard(f: JsonObject, onClick: () -> Unit) {
         append("${home?.str("name")} versus ${away?.str("name")}. ")
         append(when (status) { "in_progress" -> "Live, $hs to $aws"; "completed" -> "Full time, $hs to $aws"; else -> "Starts ${dayLabel(t)} at ${clock(t)}" })
     }
-    BigCard(Modifier.semantics(mergeDescendants = true) { contentDescription = desc }, onClick = onClick) {
+    BigCard(Modifier.semantics(mergeDescendants = true) { contentDescription = desc }, onClick = onClick, wave = true) {
         Column(Modifier.fillMaxWidth().padding(vertical = 14.dp, horizontal = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             when (status) {
                 "in_progress" -> BadgePill("Live", dot = true)
@@ -185,8 +185,7 @@ fun StandingsScreen() {
     val leagues = rememberLeagues()
     val league = LocalLeague.current
     val res = rememberRes(league.leagueId?.let { "/api/v1/leagues/$it/standings" })
-    Page("Standings", savedAt = res.loaded?.savedAt) {
-        LeaguePicker(leagues)
+    Page("Standings", savedAt = res.loaded?.savedAt, hero = { LeaguePicker(leagues) }) {
         PullToRefreshBox(isRefreshing = res.loading && res.loaded != null, onRefresh = res.reload, modifier = Modifier.fillMaxSize()) {
             ResBox(res) { l ->
                 val table = l.data.arr("table")
@@ -221,14 +220,14 @@ fun StandingsScreen() {
 @Composable
 private fun StandingsTable(table: List<JsonObject>, spots: Int?) {
     val headers = listOf("P", "W", "D", "L", "+/-", "Pts")
-    Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)) {
-        Row(Modifier.fillMaxWidth().height(32.dp).padding(end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+    BigCard {
+        Row(Modifier.fillMaxWidth().height(40.dp).padding(end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("#", Modifier.width(36.dp), textAlign = TextAlign.Center, style = MaterialTheme.typography.labelSmall, color = extra.muted)
             Text("TEAM", Modifier.weight(1f), style = MaterialTheme.typography.labelSmall, color = extra.muted)
-            headers.forEach { Text(it, Modifier.width(30.dp), textAlign = TextAlign.Center, style = MaterialTheme.typography.labelSmall, color = extra.muted) }
-            Box(Modifier.width(30.dp))
+            headers.forEach { Text(it, Modifier.width(27.dp), textAlign = TextAlign.Center, style = MaterialTheme.typography.labelSmall, color = extra.muted) }
+            Box(Modifier.width(27.dp))
         }
-        Divider()
+        CardDivider()
         table.forEachIndexed { i, r ->
             val q = qualOf(r.str("status"))
             val rank = r.int("rank") ?: (i + 1)
@@ -247,14 +246,14 @@ private fun StandingsTable(table: List<JsonObject>, spots: Int?) {
                     Text(r.str("name") ?: "", maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.Medium)
                 }
                 listOf(r.int("played"), r.int("won"), r.int("drawn"), r.int("lost")).forEach {
-                    Text("${it ?: 0}", Modifier.width(30.dp), textAlign = TextAlign.Center, style = NumStyle)
+                    Text("${it ?: 0}", Modifier.width(27.dp), textAlign = TextAlign.Center, style = NumStyle)
                 }
                 val diff = r.int("diff") ?: 0
-                Text(if (diff > 0) "+$diff" else "$diff", Modifier.width(30.dp), textAlign = TextAlign.Center, style = NumStyle)
-                Text("${r.int("points") ?: 0}", Modifier.width(30.dp), textAlign = TextAlign.Center, style = NumStyle, fontWeight = FontWeight.Bold)
-                Box(Modifier.width(30.dp), contentAlignment = Alignment.Center) { QualIcon(q, 18) }
+                Text(if (diff > 0) "+$diff" else "$diff", Modifier.width(27.dp), textAlign = TextAlign.Center, style = NumStyle)
+                Text("${r.int("points") ?: 0}", Modifier.width(27.dp), textAlign = TextAlign.Center, style = NumStyle, fontWeight = FontWeight.Bold)
+                Box(Modifier.width(27.dp), contentAlignment = Alignment.Center) { QualIcon(q, 18) }
             }
-            if (spots != null && rank == spots) Box(Modifier.fillMaxWidth().height(1.dp).background(extra.gold)) else Divider()
+            if (spots != null && rank == spots) Box(Modifier.fillMaxWidth().padding(horizontal = 12.dp).height(2.dp).background(extra.gold)) else if (i < table.lastIndex) CardDivider()
         }
     }
 }

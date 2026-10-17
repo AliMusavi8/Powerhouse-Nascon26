@@ -15,7 +15,7 @@ import com.nascon.app.ui.MainScreen
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        enableEdgeToEdge(statusBarStyle = androidx.activity.SystemBarStyle.dark(android.graphics.Color.TRANSPARENT))
         val g = (application as App).graph
         setContent {
             val session by g.session.state.collectAsStateWithLifecycle()

@@ -289,14 +289,14 @@ fun ResBox(res: Res, content: @Composable (Loaded) -> Unit) {
 val Gutter = PaddingValues(horizontal = 16.dp)
 
 @Composable
-fun Divider() = HorizontalDivider(color = extra.line)
+fun Divider() = Unit
 
 @Composable
 fun RowItem(modifier: Modifier = Modifier, onClick: (() -> Unit)? = null, content: @Composable () -> Unit) {
     Box(
-        modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)
+        modifier.fillMaxWidth().cardRow()
             .let { if (onClick != null) it.clickable(onClick = onClick) else it }
-            .heightIn(min = 48.dp).padding(horizontal = 16.dp, vertical = 8.dp),
+            .heightIn(min = 52.dp).padding(horizontal = 16.dp, vertical = 10.dp),
         contentAlignment = Alignment.CenterStart,
     ) { content() }
 }

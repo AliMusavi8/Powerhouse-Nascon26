@@ -46,7 +46,8 @@ val NumStyle = TextStyle(fontFamily = Condensed, fontWeight = FontWeight.Medium,
 
 @Composable
 fun AppTheme(branding: Branding?, content: @Composable () -> Unit) {
-    val primary = branding?.primary ?: Color(0xFF1E4FD8)
+    // Pitch green from the visual reference; tenant gold and logo text stay.
+    val primary = Color(0xFF1C8B2E)
     val gold = branding?.secondary ?: Color(0xFFF5B700)
     val dark = isSystemInDarkTheme()
     val scheme = if (dark) darkColorScheme(
@@ -60,12 +61,12 @@ fun AppTheme(branding: Branding?, content: @Composable () -> Unit) {
         surfaceContainerHighest = Color(0xFF26272C),
         outline = Color(0xFF3A3B41), outlineVariant = Color(0xFF2A2B30),
         error = Color(0xFFF7766C), onError = Color(0xFF1F0705),
-        primaryContainer = Color(0xFF18223F), onPrimaryContainer = Color(0xFFC9D6FF),
+        primaryContainer = Color(0xFF12301B), onPrimaryContainer = Color(0xFFBFEBC8),
         secondaryContainer = Color(0xFF202125), onSecondaryContainer = Color(0xFFECEDEF),
     ) else lightColorScheme(
         primary = primary, onPrimary = Color.White,
         secondary = gold, onSecondary = Color(0xFF1A1400),
-        background = Color(0xFFF6F3EA), onBackground = Color(0xFF16171A),
+        background = Color(0xFFF5F2E6), onBackground = Color(0xFF16171A),
         surface = Color.White, onSurface = Color(0xFF16171A),
         surfaceVariant = Color(0xFFF1EDE2), onSurfaceVariant = Color(0xFF6B6A63),
         surfaceContainer = Color.White, surfaceContainerHigh = Color(0xFFF1EDE2),
@@ -73,16 +74,16 @@ fun AppTheme(branding: Branding?, content: @Composable () -> Unit) {
         surfaceContainerHighest = Color(0xFFE9EAED),
         outline = Color(0xFFCFC9B8), outlineVariant = Color(0xFFE9E4D6),
         error = Color(0xFFB42318), onError = Color.White,
-        primaryContainer = Color(0xFFEAF0FD), onPrimaryContainer = Color(0xFF0D2A85),
+        primaryContainer = Color(0xFFE3F3E5), onPrimaryContainer = Color(0xFF0B4A17),
         secondaryContainer = Color(0xFFF1F2F4), onSecondaryContainer = Color(0xFF16171A),
     )
     val extra = if (dark) Extra(
-        link = Color(0xFF7299FF), tint = Color(0xFF18223F), live = Color(0xFFFF5C55),
+        link = Color(0xFF5BD178), tint = Color(0xFF12301B), live = Color(0xFFFF5C55),
         ok = Color(0xFF52C48D), okBg = Color(0xFF13271D), bad = Color(0xFFF7766C), badBg = Color(0xFF2C1715),
         warn = Color(0xFFF2C14E), warnBg = Color(0xFF2A2312), gold = gold, muted = Color(0xFF999CA4), line = Color(0xFF2A2B30),
         ink = Color(0xFFF2F2F2), onInk = Color(0xFF111111),
     ) else Extra(
-        link = primary, tint = Color(0xFFEAF0FD), live = Color(0xFFD12C2C),
+        link = Color(0xFF1C8B2E), tint = Color(0xFFE3F3E5), live = Color(0xFFD12C2C),
         ok = Color(0xFF1C7A44), okBg = Color(0xFFE6F3EB), bad = Color(0xFFB42318), badBg = Color(0xFFFCEBE9),
         warn = Color(0xFF7A5300), warnBg = Color(0xFFFFF3D1), gold = gold, muted = Color(0xFF6B6A63), line = Color(0xFFE9E4D6),
         ink = Color(0xFF111111), onInk = Color.White,

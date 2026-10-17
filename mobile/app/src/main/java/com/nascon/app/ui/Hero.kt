@@ -136,7 +136,11 @@ fun Page(
                 Column(Modifier.fillMaxWidth().statusBarsPadding().padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 20.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         if (back) CircleButton(Icons.AutoMirrored.Filled.ArrowBack, "Back", { ui.nav.popBackStack() })
-                        else Logo(ui.session.branding.logoText, 44)
+                        else Box(
+                            Modifier.size(48.dp).clip(CircleShape).background(Color.White).border(3.dp, extra.gold, CircleShape)
+                                .semantics { contentDescription = "${ui.session.branding.name} logo" },
+                            contentAlignment = Alignment.Center,
+                        ) { Text(ui.session.branding.logoText, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 17.sp) }
                         if (back) Text(title, color = OnHero, fontSize = 16.sp, fontWeight = FontWeight.Medium, maxLines = 1,
                             overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                         else Spacer(Modifier.weight(1f))
@@ -219,13 +223,45 @@ fun PillTabs(labels: List<String>, selected: Int, onSelect: (Int) -> Unit) {
 }
 
 /** Large rounded white card used for matches and grouped content. */
+/** Card outline with gently curved (concave) top and bottom edges, as on the reference match cards. */
+class WaveShape(private val radius: androidx.compose.ui.unit.Dp = 30.dp, private val dip: androidx.compose.ui.unit.Dp = 12.dp) : androidx.compose.ui.graphics.Shape {
+    override fun createOutline(size: androidx.compose.ui.geometry.Size, layoutDirection: androidx.compose.ui.unit.LayoutDirection, density: androidx.compose.ui.unit.Density): androidx.compose.ui.graphics.Outline {
+        val r = with(density) { radius.toPx() }
+        val d = with(density) { dip.toPx() }
+        val w = size.width
+        val hh = size.height
+        val p = androidx.compose.ui.graphics.Path().apply {
+            moveTo(0f, r)
+            quadraticTo(0f, 0f, r, 0f)
+            quadraticTo(w / 2f, d * 2f, w - r, 0f)
+            quadraticTo(w, 0f, w, r)
+            lineTo(w, hh - r)
+            quadraticTo(w, hh, w - r, hh)
+            quadraticTo(w / 2f, hh - d * 2f, r, hh)
+            quadraticTo(0f, hh, 0f, hh - r)
+            close()
+        }
+        return androidx.compose.ui.graphics.Outline.Generic(p)
+    }
+}
+
+/** Turns a full-width row into a rounded white card with spacing around it. */
 @Composable
-fun BigCard(modifier: Modifier = Modifier, onClick: (() -> Unit)? = null, content: @Composable ColumnScope.() -> Unit) {
+fun Modifier.cardRow(): Modifier = this.padding(horizontal = 16.dp, vertical = 5.dp)
+    .clip(RoundedCornerShape(22.dp)).background(MaterialTheme.colorScheme.surface)
+    .border(1.dp, extra.line, RoundedCornerShape(22.dp))
+
+/** Hairline used between rows inside one card. */
+@Composable
+fun CardDivider() = androidx.compose.material3.HorizontalDivider(Modifier.padding(horizontal = 16.dp), color = extra.line)
+
+@Composable
+fun BigCard(modifier: Modifier = Modifier, onClick: (() -> Unit)? = null, wave: Boolean = false, content: @Composable ColumnScope.() -> Unit) {
     Surface(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
-        shape = RoundedCornerShape(26.dp),
+        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = if (wave) WaveShape() else RoundedCornerShape(26.dp),
         color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, extra.line),
+        border = if (wave) BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)) else BorderStroke(1.dp, extra.line),
         onClick = onClick ?: {},
         enabled = onClick != null,
     ) { Column { content() } }

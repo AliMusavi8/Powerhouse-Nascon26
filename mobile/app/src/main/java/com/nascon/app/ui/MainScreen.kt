@@ -89,6 +89,7 @@ fun MainScreen(session: SessionState) {
 
     CompositionLocalProvider(LocalUi provides ui, LocalLeague provides league) {
         Scaffold(
+            contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
             snackbarHost = { SnackbarHost(snack) },
             bottomBar = {
                 NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {

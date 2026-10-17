@@ -58,7 +58,7 @@ fun ProfileScreen() {
     val pending by g.db.actions().observePendingCount().collectAsStateWithLifecycle(0)
     Page("Profile") {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-            Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(16.dp),
+            Row(Modifier.fillMaxWidth().cardRow().padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 Crest(u.name, 48)
                 Column {
@@ -68,7 +68,7 @@ fun ProfileScreen() {
                 }
             }
             SectionLabel("What you can do")
-            Column(Modifier.background(MaterialTheme.colorScheme.surface)) {
+            Column(Modifier.cardRow()) {
                 Line("View fixtures, standings and clubs", true)
                 Line("Buy from the club store", true)
                 Line("Enter match scores", ui.session.canScore)
@@ -129,7 +129,7 @@ fun QueueScreen() {
     Page("Saved actions", back = true) {
         LazyColumn(Modifier.fillMaxSize()) {
             item {
-                Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(16.dp),
+                Column(Modifier.fillMaxWidth().cardRow().padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(
                         when {
@@ -177,7 +177,7 @@ private fun ActionRow(a: PendingAction) {
         PendingAction.STATE_DUPLICATE -> Triple(Icons.Filled.CheckCircle, x.muted, a.result ?: "Already recorded.")
         else -> Triple(Icons.Filled.ErrorOutline, x.bad, a.result ?: "Not applied.")
     }
-    Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)) {
+    Column(Modifier.fillMaxWidth().cardRow()) {
         Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box(Modifier.size(36.dp).clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
                 Icon(if (a.type == "score_event") Icons.Filled.Sports else Icons.Filled.SwapHoriz,

@@ -127,7 +127,7 @@ fun StoreScreen() {
                         val vs = p.arr("variants")
                         val min = vs.mapNotNull { it.long("price_minor") }.minOrNull()
                         val inStock = vs.any { (it.int("stock") ?: 0) > 0 }
-                        Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)
+                        Row(Modifier.fillMaxWidth().cardRow()
                             .clickable(onClickLabel = "Open product") { ui.nav.navigate("product/${p.str("product_id")}") }
                             .padding(horizontal = 16.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -169,7 +169,7 @@ fun ProductScreen(productId: String) {
                     Box(Modifier.fillMaxWidth().aspectRatio(2f).background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
                         Icon(Icons.Filled.ShoppingBag, contentDescription = null, tint = extra.muted, modifier = Modifier.size(64.dp))
                     }
-                    Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Column(Modifier.fillMaxWidth().cardRow().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(p.str("name") ?: "", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
                             Text(money(v?.long("price_minor"), v?.str("currency")), style = NumStyle, fontSize = 18.sp, fontWeight = FontWeight.Bold)
@@ -200,7 +200,7 @@ fun ProductScreen(productId: String) {
                         }
                     }
                 }
-                Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)) {
+                Column(Modifier.fillMaxWidth().cardRow()) {
                     Divider()
                     Button(
                         onClick = {
@@ -247,7 +247,7 @@ fun CartScreen() {
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
                 SectionLabel("Items")
                 g.cart.toList().forEachIndexed { i, line ->
-                    Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(start = 16.dp, top = 8.dp, bottom = 8.dp),
+                    Row(Modifier.fillMaxWidth().cardRow().padding(start = 16.dp, top = 8.dp, bottom = 8.dp),
                         verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Text(line.product.str("name") ?: "", fontWeight = FontWeight.Medium)
@@ -259,11 +259,11 @@ fun CartScreen() {
                     Divider()
                 }
                 SectionLabel("Discount")
-                Box(Modifier.background(MaterialTheme.colorScheme.surface).padding(16.dp)) {
+                Box(Modifier.cardRow().padding(16.dp)) {
                     OutlinedTextField(code, { code = it.uppercase().trim() }, label = { Text("Discount code (optional)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 }
                 SectionLabel("Payment (test mode)")
-                Column(Modifier.background(MaterialTheme.colorScheme.surface)) {
+                Column(Modifier.cardRow()) {
                     tokens.forEach { (t, label, hint) ->
                         Row(Modifier.fillMaxWidth().selectable(token == t, role = Role.RadioButton) { token = t }.heightIn(min = 56.dp).padding(horizontal = 16.dp),
                             verticalAlignment = Alignment.CenterVertically) {
@@ -276,7 +276,7 @@ fun CartScreen() {
                     Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
                 }
             }
-            Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(Modifier.fillMaxWidth().cardRow().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row { Text("Subtotal", Modifier.weight(1f), color = extra.muted); Text(money(subtotal, currency), style = NumStyle) }
                 if (code.isNotBlank()) Text("Discount is applied at payment if the code is valid.", fontSize = 12.sp, color = extra.muted)
                 Button(onClick = { confirm = true }, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
@@ -342,7 +342,7 @@ fun ReceiptScreen(orderId: String) {
         if (r == null) { if (orders.error != null) ErrorState(orders.error, orders.reload) else Loading(); return@Page }
         val currency = r.str("currency") ?: "PKR"
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-            Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally,
+            Column(Modifier.fillMaxWidth().cardRow().padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Icon(Icons.Filled.CheckCircle, null, tint = extra.ok, modifier = Modifier.size(40.dp))
                 Text("Paid", style = MaterialTheme.typography.titleLarge)

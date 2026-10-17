@@ -154,7 +154,7 @@ fun MatchScreen(matchId: String) {
                                             Text("Pending · saved offline at ${time(a.createdAt)}", fontSize = 12.sp, color = extra.warn)
                                         }
                                     }
-                                    Divider()
+                                    CardDivider()
                                 }
                                 events.forEachIndexed { i, e -> EventRow(e, d, last = i == events.lastIndex) }
                             }
@@ -300,7 +300,7 @@ private fun EventRow(e: JsonObject, d: JsonObject, last: Boolean = false) {
             }
             if (compensated) Chip("Corrected", extra.muted, MaterialTheme.colorScheme.surfaceVariant)
         }
-        if (!last) Divider()
+        if (!last) CardDivider()
     }
 }
 
@@ -332,10 +332,10 @@ private fun OrganiserBar(matchId: String, d: JsonObject, refresh: () -> Unit) {
     }
 
     Column(Modifier.background(MaterialTheme.colorScheme.surface)) {
-        Divider()
+        CardDivider()
         Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Organiser", fontSize = 12.sp, color = extra.muted, modifier = Modifier.weight(1f))
+            Box(Modifier.weight(1f))
             when (status) {
                 "upcoming" -> Button(onClick = { confirmStart = true }, enabled = !busy, modifier = Modifier.heightIn(min = 48.dp)) {
                     Icon(Icons.Filled.PlayArrow, null); Text(" Start match")
