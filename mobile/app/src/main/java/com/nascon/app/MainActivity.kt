@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nascon.app.ui.AppTheme
@@ -19,8 +20,16 @@ class MainActivity : ComponentActivity() {
         val g = (application as App).graph
         setContent {
             val session by g.session.state.collectAsStateWithLifecycle()
+            var splash by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(true) }
+            androidx.compose.runtime.LaunchedEffect(Unit) { kotlinx.coroutines.delay(1600); splash = false }
             AppTheme(session?.branding) {
-                if (session == null) LoginScreen() else MainScreen(session!!)
+                androidx.compose.animation.Crossfade(targetState = splash, label = "splash") { show ->
+                    when {
+                        show -> com.nascon.app.ui.SplashScreen()
+                        session == null -> LoginScreen()
+                        else -> MainScreen(session!!)
+                    }
+                }
             }
         }
     }

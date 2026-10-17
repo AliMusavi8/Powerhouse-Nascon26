@@ -141,7 +141,7 @@ fun Page(
                 Column(Modifier.fillMaxWidth().statusBarsPadding().padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 20.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         if (back) CircleButton(Icons.AutoMirrored.Filled.ArrowBack, "Back", { ui.nav.popBackStack() })
-                        else Box(Modifier.shadow(6.dp, RoundedCornerShape(16.dp)).border(2.dp, Color.White.copy(alpha = 0.6f), RoundedCornerShape(16.dp))) { ScorixLogo(48, 16) }
+                        else Box(Modifier.shadow(6.dp, CircleShape).border(2.dp, Color.White.copy(alpha = 0.7f), CircleShape)) { ScorixLogo(48, circle = true) }
                         if (!back && logoMenu != null) Box(Modifier.weight(6f, fill = false)) {
                             var open by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
                             Row(

@@ -7,6 +7,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -47,11 +48,11 @@ private fun initials(name: String) =
     name.split(" ").filter { it.isNotBlank() }.take(2).joinToString("") { it.take(1).uppercase() }.ifBlank { "?" }
 
 @Composable
-fun ScorixLogo(size: Int = 48, corner: Int = 14) {
+fun ScorixLogo(size: Int = 48, corner: Int = 14, circle: Boolean = false) {
     Image(
         painterResource(R.drawable.scorix_logo), contentDescription = "Scorix logo",
         contentScale = ContentScale.Crop,
-        modifier = Modifier.size(size.dp).clip(RoundedCornerShape(corner.dp)),
+        modifier = Modifier.size(size.dp).clip(if (circle) CircleShape else RoundedCornerShape(corner.dp)),
     )
 }
 
@@ -100,11 +101,6 @@ fun Avatar(name: String, size: Int = 64) {
             drawCircle(Color.White.copy(alpha = 0.92f), radius = w * 0.18f, center = Offset(w / 2f, h * 0.38f))
             drawOval(Color.White.copy(alpha = 0.92f), topLeft = Offset(w * 0.2f, h * 0.62f), size = androidx.compose.ui.geometry.Size(w * 0.6f, h * 0.5f))
         }
-        Box(
-            Modifier.align(Alignment.BottomEnd).size((size * 0.36).dp).clip(CircleShape).background(Color(0xFF111111))
-                .border(2.dp, Color.White, CircleShape),
-            contentAlignment = Alignment.Center,
-        ) { Text(initials(name), color = Color.White, fontWeight = FontWeight.Bold, fontSize = (size * 0.13).sp) }
     }
 }
 
@@ -174,6 +170,23 @@ fun ProductArt(product: kotlinx.serialization.json.JsonObject?, modifier: Modifi
                     drawCircle(Color.White.copy(alpha = 0.85f), s * 0.08f, p(0.5f, 0.45f))
                 }
             }
+        }
+    }
+}
+
+/** Launch screen: brand green with pitch stripes, the round logo and the app name. */
+@Composable
+fun SplashScreen() {
+    Box(
+        Modifier.fillMaxSize().background(androidx.compose.material3.MaterialTheme.colorScheme.primary),
+        contentAlignment = Alignment.Center,
+    ) {
+        Stripes(Modifier.fillMaxSize())
+        androidx.compose.foundation.layout.Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(Modifier.shadow(16.dp, CircleShape).border(3.dp, Color.White.copy(alpha = 0.8f), CircleShape)) { ScorixLogo(132, circle = true) }
+            Text("Scorix", color = Color.White, fontSize = 40.sp, fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 20.dp))
+            Text("Live scores · Standings · Clubs · Store", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
         }
     }
 }
