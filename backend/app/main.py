@@ -103,3 +103,4 @@ async def _rate_limit(request: Request, call_next):
 app.include_router(audit.router)
 app.include_router(rbac.router)
 app.include_router(api.router)
+app.include_router(api.ws_router)

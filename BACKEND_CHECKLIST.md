@@ -64,12 +64,12 @@ Legend: `[x]` done · `[ ]` pending
 - [x] Tests
 
 ## Phase 8: Production API for the app
-- [ ] Auth login + `/me`
-- [ ] Leagues, fixtures, standings, match detail, clubs, products, checkout, receipt PDF
-- [ ] Scoring + roster + sync routes (RBAC enforced)
-- [ ] WebSocket live score + pinned product
-- [ ] Demo seed data (`demo-` fixtures)
-- [ ] Worker consuming domain events
+- [x] Auth login + `/me`
+- [x] Leagues, fixtures, standings, match detail, clubs, products, checkout, receipt PDF
+- [x] Scoring + roster + sync routes (RBAC enforced)
+- [x] WebSocket live score + pinned product
+- [x] Demo seed data (`demo-` fixtures)
+- [x] Worker consuming domain events
 
 ## Phase 9: Delivery
 - [ ] `run_tests.sh` + real `COVERAGE.json`
