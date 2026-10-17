@@ -1,6 +1,7 @@
 package com.nascon.app.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -56,16 +57,23 @@ fun ProfileScreen() {
     val u = ui.session.user
     var confirmOut by remember { mutableStateOf(false) }
     val pending by g.db.actions().observePendingCount().collectAsStateWithLifecycle(0)
-    Page("Profile") {
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-            Row(Modifier.fillMaxWidth().cardRow().padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                Crest(u.name, 48)
-                Column {
-                    Text(u.name, style = MaterialTheme.typography.titleMedium)
-                    Text(u.email, color = extra.muted, fontSize = 13.sp)
-                    Text("${u.roleLabel} · ${ui.session.branding.name}", color = extra.muted, fontSize = 13.sp)
+    Page("Profile", hero = {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Box(Modifier.border(3.dp, androidx.compose.ui.graphics.Color.White, androidx.compose.foundation.shape.CircleShape).padding(3.dp)) { Avatar(u.name, 76) }
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(u.name, color = androidx.compose.ui.graphics.Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Text(u.email, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.8f), fontSize = 13.sp)
+                Box(Modifier.clip(RoundedCornerShape(50)).background(androidx.compose.ui.graphics.Color.White).padding(horizontal = 12.dp, vertical = 4.dp)) {
+                    Text(u.roleLabel, color = MaterialTheme.colorScheme.primary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                 }
+            }
+        }
+    }) {
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                StatTile(Modifier.weight(1f), if (pending == 0) "0" else "$pending", "Waiting to send")
+                StatTile(Modifier.weight(1f), if (ui.session.canScore) "Yes" else "No", "Score entry")
+                StatTile(Modifier.weight(1f), if (ui.session.canManage) "Yes" else "No", "Roster")
             }
             SectionLabel("What you can do")
             Column(Modifier.cardRow()) {
@@ -104,6 +112,18 @@ fun ProfileScreen() {
         else "You can sign back in at any time.",
         "Sign out", onDismiss = { confirmOut = false },
     ) { confirmOut = false; g.session.signOut() }
+}
+
+@Composable
+private fun StatTile(modifier: Modifier, value: String, label: String) {
+    Column(
+        modifier.clip(RoundedCornerShape(22.dp)).background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, extra.line, RoundedCornerShape(22.dp)).padding(vertical = 14.dp, horizontal = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(value, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        Text(label, fontSize = 12.sp, color = extra.muted, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+    }
 }
 
 @Composable

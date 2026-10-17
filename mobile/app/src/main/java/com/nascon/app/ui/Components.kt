@@ -67,16 +67,7 @@ import java.util.Locale
 val extra: Extra @Composable get() = LocalExtra.current
 
 @Composable
-fun Logo(text: String, size: Int = 28) {
-    Box(
-        Modifier.size(size.dp).clip(RoundedCornerShape(5.dp)).background(MaterialTheme.colorScheme.primary)
-            .semantics { contentDescription = "Club logo" },
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(text, color = Color.White, fontWeight = FontWeight.Bold, fontSize = (size * 0.42).sp)
-        Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(0.dp).heightIn(3.dp, 3.dp).background(extra.gold))
-    }
-}
+fun Logo(text: String, size: Int = 28) = ScorixLogo(size, (size * 0.28).toInt())
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -193,13 +184,7 @@ fun Chip(text: String, fg: Color, bg: Color, icon: ImageVector? = null) {
 }
 
 @Composable
-fun Crest(name: String, size: Int = 24) {
-    val initials = name.split(" ").filter { it.isNotBlank() }.take(2).joinToString("") { it.take(1).uppercase() }
-    Box(
-        Modifier.size(size.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant),
-        contentAlignment = Alignment.Center,
-    ) { Text(initials, fontSize = (size * 0.36).sp, fontWeight = FontWeight.Bold, color = extra.muted) }
-}
+fun Crest(name: String, size: Int = 24) = ClubBadge(name, size)
 
 @Composable
 fun Empty(icon: ImageVector, title: String, body: String, action: (@Composable () -> Unit)? = null) {

@@ -141,11 +141,7 @@ fun Page(
                 Column(Modifier.fillMaxWidth().statusBarsPadding().padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 20.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         if (back) CircleButton(Icons.AutoMirrored.Filled.ArrowBack, "Back", { ui.nav.popBackStack() })
-                        else Box(
-                            Modifier.size(48.dp).clip(CircleShape).background(Color.White).border(3.dp, extra.gold, CircleShape)
-                                .semantics { contentDescription = "${ui.session.branding.name} logo" },
-                            contentAlignment = Alignment.Center,
-                        ) { Text(ui.session.branding.logoText, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 17.sp) }
+                        else Box(Modifier.shadow(6.dp, RoundedCornerShape(16.dp)).border(2.dp, Color.White.copy(alpha = 0.6f), RoundedCornerShape(16.dp))) { ScorixLogo(48, 16) }
                         if (!back && logoMenu != null) Box(Modifier.weight(1f, fill = false)) {
                             var open by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
                             Row(
@@ -263,16 +259,7 @@ fun BadgePill(text: String, dot: Boolean = false, inverted: Boolean = true, dotC
 
 /** Round crest: white disc with a soft shadow and the team initials in brand colour. */
 @Composable
-fun BigCrest(name: String, size: Int = 60) {
-    val initials = name.split(" ").filter { it.isNotBlank() }.take(2).joinToString("") { it.take(1).uppercase() }
-    Box(
-        Modifier.size(size.dp).shadow(4.dp, CircleShape).clip(CircleShape).background(Color.White)
-            .border(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.18f), CircleShape),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(initials, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = (size * 0.32).sp)
-    }
-}
+fun BigCrest(name: String, size: Int = 60) = ClubBadge(name, size)
 
 /** Outlined pill tabs; the selected tab is filled black. */
 @Composable
