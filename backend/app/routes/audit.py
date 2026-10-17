@@ -72,3 +72,24 @@ async def register_league(request: Request):
 async def get_standings(league_id: str):
     from ..services import leagues
     return respond(200, await run_in_threadpool(leagues.standings, league_id))
+
+
+@router.post("/audit/v1/roster/setup")
+async def roster_setup(request: Request):
+    from ..services import roster
+    body = await read_object(request)
+    return respond(201, await run_in_threadpool(roster.setup, body))
+
+
+@router.post("/audit/v1/roster/transfer")
+async def roster_transfer(request: Request):
+    from ..services import roster
+    body = await read_object(request)
+    status, result = await run_in_threadpool(roster.transfer, body)
+    return respond(status, result)
+
+
+@router.get("/audit/v1/roster/history/{player_id}")
+async def roster_history(player_id: str, as_of: str | None = None):
+    from ..services import roster
+    return respond(200, await run_in_threadpool(roster.history, player_id, as_of))

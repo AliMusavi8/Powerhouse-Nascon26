@@ -109,6 +109,7 @@ CREATE TABLE IF NOT EXISTS registrations (
     registration_type TEXT,
     start_date        TEXT,
     loan_end_date     TEXT,
+    ord               BIGSERIAL,
     PRIMARY KEY (league_id, player_id)
 );
 
@@ -130,6 +131,7 @@ CREATE TABLE IF NOT EXISTS roster_audit (
 
 CREATE TABLE IF NOT EXISTS roster_requests (
     request_id TEXT PRIMARY KEY,
+    league_id  TEXT,
     body_hash  TEXT NOT NULL,
     response   JSONB NOT NULL
 );

@@ -40,10 +40,10 @@ Legend: `[x]` done · `[ ]` pending
 - [x] Unit tests
 
 ## Phase 4: Roster (FR-2.2)
-- [ ] `POST /audit/v1/roster/setup`
-- [ ] `POST /audit/v1/roster/transfer` (8 ordered checks, effects, deferred state, idempotency)
-- [ ] `GET /audit/v1/roster/history/{player_id}?as_of=` (loan auto-return once)
-- [ ] Unit tests
+- [x] `POST /audit/v1/roster/setup`
+- [x] `POST /audit/v1/roster/transfer` (8 ordered checks, effects, deferred state, idempotency)
+- [x] `GET /audit/v1/roster/history/{player_id}?as_of=` (loan auto-return once)
+- [x] Unit tests
 
 ## Phase 5: Store (FR-2.3, NFR-3)
 - [ ] Atomic stock reservation, mock gateway, discount
