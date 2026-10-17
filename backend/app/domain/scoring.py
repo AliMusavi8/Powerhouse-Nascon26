@@ -1,7 +1,7 @@
 """Event-sourced scoring (spec 5.9). Pure functions over a match's append-only event log.
 
 Everything sport-specific comes from the sport config: event names, points/runs/rounds, ball and
-wicket limits, best-of, draw policy.
+dismissal limits, best-of, draw policy.
 """
 from ..errors import ApiError, conflict, not_found, validation
 from .validate import is_id, is_int

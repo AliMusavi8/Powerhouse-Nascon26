@@ -20,3 +20,4 @@ mobile/.idea/
 
 # Competition handout
 /*.pdf
+.coverage-raw.json

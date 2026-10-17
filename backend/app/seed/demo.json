@@ -1,0 +1,228 @@
+{
+ "league_id": "league-alpha-1",
+ "sport_id": "football",
+ "score_event": "goal",
+ "clubs": [
+  {
+   "club_id": "demo-club-falcons",
+   "name": "Falcons FC",
+   "venue": "Falcon Park",
+   "lat": 33.65,
+   "lng": 73.02
+  },
+  {
+   "club_id": "demo-club-lions",
+   "name": "Lions SC",
+   "venue": "Lions Den",
+   "lat": 33.71,
+   "lng": 73.09
+  }
+ ],
+ "fixtures": [
+  {
+   "match_id": "demo-m1",
+   "home": "club-alpha-1",
+   "away": "club-alpha-2",
+   "scheduled_at": "2026-10-10T15:00:00Z",
+   "venue": "Alpha Arena",
+   "goals": [
+    "club-alpha-1",
+    "club-alpha-1",
+    "club-alpha-2"
+   ],
+   "state": "completed"
+  },
+  {
+   "match_id": "demo-m2",
+   "home": "demo-club-falcons",
+   "away": "demo-club-lions",
+   "scheduled_at": "2026-10-10T18:00:00Z",
+   "venue": "Falcon Park",
+   "goals": [
+    "demo-club-lions"
+   ],
+   "state": "completed"
+  },
+  {
+   "match_id": "demo-m3",
+   "home": "club-alpha-1",
+   "away": "demo-club-falcons",
+   "scheduled_at": "2026-10-14T15:00:00Z",
+   "venue": "Alpha Arena",
+   "goals": [
+    "demo-club-falcons",
+    "club-alpha-1"
+   ],
+   "state": "completed"
+  },
+  {
+   "match_id": "demo-m4",
+   "home": "club-alpha-2",
+   "away": "demo-club-lions",
+   "scheduled_at": "2026-10-17T13:00:00Z",
+   "venue": "City Ground",
+   "goals": [
+    "club-alpha-2"
+   ],
+   "state": "live"
+  },
+  {
+   "match_id": "demo-m5",
+   "home": "demo-club-lions",
+   "away": "club-alpha-1",
+   "scheduled_at": "2026-10-21T15:00:00Z",
+   "venue": "Lions Den",
+   "goals": [],
+   "state": "upcoming"
+  },
+  {
+   "match_id": "demo-m6",
+   "home": "demo-club-falcons",
+   "away": "club-alpha-2",
+   "scheduled_at": "2026-10-21T18:00:00Z",
+   "venue": "Falcon Park",
+   "goals": [],
+   "state": "upcoming"
+  }
+ ],
+ "squads": {
+  "club-alpha-1": [
+   {
+    "player_id": "player-alpha-1",
+    "name": "Ali Raza",
+    "position": "fw",
+    "role": "captain"
+   },
+   {
+    "player_id": "demo-p-a1-gk",
+    "name": "Hassan Ali",
+    "position": "gk",
+    "role": "starter"
+   },
+   {
+    "player_id": "demo-p-a1-df",
+    "name": "Zain Abbas",
+    "position": "df",
+    "role": "vice_captain"
+   },
+   {
+    "player_id": "demo-p-a1-mf",
+    "name": "Saad Iqbal",
+    "position": "mf",
+    "role": "starter"
+   },
+   {
+    "player_id": "demo-p-a1-sub",
+    "name": "Faisal Khan",
+    "position": "mf",
+    "role": "substitute"
+   }
+  ],
+  "club-alpha-2": [
+   {
+    "player_id": "player-alpha-2",
+    "name": "Bilal Ahmed",
+    "position": "gk",
+    "role": "starter"
+   },
+   {
+    "player_id": "demo-p-a2-fw",
+    "name": "Omar Farooq",
+    "position": "fw",
+    "role": "captain"
+   },
+   {
+    "player_id": "demo-p-a2-df",
+    "name": "Talha Aziz",
+    "position": "df",
+    "role": "starter"
+   }
+  ],
+  "demo-club-falcons": [
+   {
+    "player_id": "demo-p-f-gk",
+    "name": "Asad Mehmood",
+    "position": "gk",
+    "role": "starter"
+   },
+   {
+    "player_id": "demo-p-f-fw",
+    "name": "Noman Riaz",
+    "position": "fw",
+    "role": "captain"
+   }
+  ],
+  "demo-club-lions": [
+   {
+    "player_id": "demo-p-l-gk",
+    "name": "Danish Iqbal",
+    "position": "gk",
+    "role": "starter"
+   },
+   {
+    "player_id": "demo-p-l-fw",
+    "name": "Yasir Shah",
+    "position": "fw",
+    "role": "captain"
+   }
+  ]
+ },
+ "products": [
+  {
+   "product_id": "demo-prod-scarf",
+   "name": "Alpha United Scarf",
+   "category": "accessories",
+   "description": "Knitted supporters scarf.",
+   "variants": [
+    {
+     "variant_id": "demo-var-scarf-std",
+     "price_minor": 150000,
+     "attributes": {
+      "color": "Blue/Gold"
+     },
+     "stock": 40
+    }
+   ]
+  },
+  {
+   "product_id": "demo-prod-cap",
+   "name": "Training Cap",
+   "category": "apparel",
+   "description": "Adjustable cotton cap.",
+   "variants": [
+    {
+     "variant_id": "demo-var-cap-blue",
+     "price_minor": 120000,
+     "attributes": {
+      "color": "Blue"
+     },
+     "stock": 25
+    },
+    {
+     "variant_id": "demo-var-cap-white",
+     "price_minor": 120000,
+     "attributes": {
+      "color": "White"
+     },
+     "stock": 0
+    }
+   ]
+  },
+  {
+   "product_id": "demo-prod-wallpaper",
+   "name": "Matchday Wallpaper Pack",
+   "category": "digital",
+   "description": "Digital download, 10 HD wallpapers.",
+   "variants": [
+    {
+     "variant_id": "demo-var-wallpaper",
+     "price_minor": 30000,
+     "attributes": {
+      "format": "HD"
+     },
+     "stock": 999
+    }
+   ]
+  }
+ ]
+}

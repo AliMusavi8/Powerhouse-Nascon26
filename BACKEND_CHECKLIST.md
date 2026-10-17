@@ -72,8 +72,8 @@ Legend: `[x]` done · `[ ]` pending
 - [x] Worker consuming domain events
 
 ## Phase 9: Delivery
-- [ ] `run_tests.sh` + real `COVERAGE.json`
-- [ ] `README.md`, `TRACEABILITY.md`, `ADR.md` (8 ADRs)
-- [ ] Clean-machine test (`down -v` + `up --build`, timed)
-- [ ] Grader-style smoke script passes
-- [ ] Final push
+- [x] `run_tests.sh` + real `COVERAGE.json`
+- [x] `README.md`, `TRACEABILITY.md`, `ADR.md` (8 ADRs)
+- [x] Clean-machine test (`down -v` + `up --build`, timed)
+- [x] Grader-style smoke script passes
+- [x] Final push
