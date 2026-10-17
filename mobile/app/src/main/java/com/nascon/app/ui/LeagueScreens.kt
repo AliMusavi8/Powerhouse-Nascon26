@@ -30,6 +30,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.TableRows
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
@@ -57,28 +58,22 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+/** League choices shown in the dropdown under the header logo. */
 @Composable
-fun LeaguePicker(leagues: List<Pair<String, String>>) {
+fun LeagueMenuItems(leagues: List<Pair<String, String>>, dismiss: () -> Unit) {
     val league = LocalLeague.current
-    if (leagues.size < 2) return
-    Row(
-        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        leagues.forEach { (id, name) ->
-            val sel = league.leagueId == id
-            Box(
-                Modifier.heightIn(min = 40.dp).clip(RoundedCornerShape(50))
-                    .background(if (sel) androidx.compose.ui.graphics.Color.White else androidx.compose.ui.graphics.Color.Transparent)
-                    .border(1.dp, androidx.compose.ui.graphics.Color.White.copy(alpha = 0.45f), RoundedCornerShape(50))
-                    .clickable(role = androidx.compose.ui.semantics.Role.Tab, onClickLabel = name) { league.leagueId = id }
-                    .padding(horizontal = 16.dp, vertical = 9.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(name, fontSize = 14.sp, fontWeight = FontWeight.Medium,
-                    color = if (sel) MaterialTheme.colorScheme.primary else androidx.compose.ui.graphics.Color.White)
-            }
-        }
+    Text("League", style = MaterialTheme.typography.labelSmall, color = extra.muted, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+    if (leagues.isEmpty()) Text("No leagues available", color = extra.muted, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+    leagues.forEach { (id, name) ->
+        androidx.compose.material3.DropdownMenuItem(
+            text = { Text(name, fontWeight = if (league.leagueId == id) FontWeight.Bold else FontWeight.Normal) },
+            leadingIcon = {
+                if (league.leagueId == id) androidx.compose.material3.Icon(Icons.Filled.Check, contentDescription = "Selected", tint = MaterialTheme.colorScheme.primary)
+                else Box(Modifier.width(24.dp))
+            },
+            onClick = { league.leagueId = id; dismiss() },
+            modifier = Modifier.heightIn(min = 48.dp),
+        )
     }
 }
 
@@ -106,8 +101,9 @@ fun FixturesScreen() {
 
     Page(
         "Scores & Fixtures", savedAt = res.loaded?.savedAt,
+        subtitle = leagues.firstOrNull { it.first == league.leagueId }?.second,
+        logoMenu = { d -> LeagueMenuItems(leagues, d) },
         hero = {
-            LeaguePicker(leagues)
             if (days.isNotEmpty()) LazyRow(state = dayState, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
                 items(days) { d ->
                     val date = runCatching { java.time.LocalDate.parse(d) }.getOrNull()
@@ -158,24 +154,26 @@ fun MatchCard(f: JsonObject, onClick: () -> Unit) {
         append("${home?.str("name")} versus ${away?.str("name")}. ")
         append(when (status) { "in_progress" -> "Live, $hs to $aws"; "completed" -> "Full time, $hs to $aws"; else -> "Starts ${dayLabel(t)} at ${clock(t)}" })
     }
-    BigCard(Modifier.semantics(mergeDescendants = true) { contentDescription = desc }, onClick = onClick, wave = true) {
-        Column(Modifier.fillMaxWidth().padding(vertical = 14.dp, horizontal = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+    WaveCard(
+        Modifier.semantics(mergeDescendants = true) { contentDescription = desc }, onClick = onClick,
+        badge = {
             when (status) {
                 "in_progress" -> BadgePill("Live", dot = true)
-                "completed" -> BadgePill("Full time", inverted = false)
-                else -> BadgePill(clock(t), inverted = false)
+                "completed" -> BadgePill("Full time")
+                else -> BadgePill(clock(t))
             }
-            Row(Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                TeamBlock(home?.str("name") ?: "To be decided", Modifier.weight(1f))
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(96.dp)) {
-                    Text(if (status == "upcoming") "vs" else "${hs ?: 0}-${aws ?: 0}", style = ScoreStyle, fontSize = 30.sp)
-                    Text(if (status == "upcoming") dayLabel(t) else (if (status == "completed") "Final" else "In play"),
-                        fontSize = 12.sp, color = extra.muted, textAlign = TextAlign.Center)
-                }
-                TeamBlock(away?.str("name") ?: "To be decided", Modifier.weight(1f))
+        },
+    ) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            TeamBlock(home?.str("name") ?: "To be decided", Modifier.weight(1f))
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(100.dp)) {
+                Text(if (status == "upcoming") "vs" else "${hs ?: 0}-${aws ?: 0}", style = ScoreStyle, fontSize = 30.sp)
+                Text(if (status == "upcoming") dayLabel(t) else (if (status == "completed") "Final score" else "In play"),
+                    fontSize = 12.sp, color = extra.muted, textAlign = TextAlign.Center)
             }
-            f.str("venue")?.let { Text(it, fontSize = 12.sp, color = extra.muted, modifier = Modifier.padding(top = 10.dp)) }
+            TeamBlock(away?.str("name") ?: "To be decided", Modifier.weight(1f))
         }
+        f.str("venue")?.let { Text(it, fontSize = 12.sp, color = extra.muted, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) }
     }
 }
 
@@ -185,7 +183,8 @@ fun StandingsScreen() {
     val leagues = rememberLeagues()
     val league = LocalLeague.current
     val res = rememberRes(league.leagueId?.let { "/api/v1/leagues/$it/standings" })
-    Page("Standings", savedAt = res.loaded?.savedAt, hero = { LeaguePicker(leagues) }) {
+    Page("Standings", savedAt = res.loaded?.savedAt, subtitle = leagues.firstOrNull { it.first == league.leagueId }?.second,
+        logoMenu = { d -> LeagueMenuItems(leagues, d) }) {
         PullToRefreshBox(isRefreshing = res.loading && res.loaded != null, onRefresh = res.reload, modifier = Modifier.fillMaxSize()) {
             ResBox(res) { l ->
                 val table = l.data.arr("table")

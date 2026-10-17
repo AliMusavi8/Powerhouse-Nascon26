@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -35,9 +36,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -125,6 +128,8 @@ fun Page(
     back: Boolean = false,
     savedAt: Long? = null,
     actions: @Composable RowScope.() -> Unit = {},
+    subtitle: String? = null,
+    logoMenu: (@Composable ColumnScope.(dismiss: () -> Unit) -> Unit)? = null,
     hero: (@Composable ColumnScope.() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -136,11 +141,25 @@ fun Page(
                 Column(Modifier.fillMaxWidth().statusBarsPadding().padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 20.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         if (back) CircleButton(Icons.AutoMirrored.Filled.ArrowBack, "Back", { ui.nav.popBackStack() })
-                        else Box(
-                            Modifier.size(48.dp).clip(CircleShape).background(Color.White).border(3.dp, extra.gold, CircleShape)
-                                .semantics { contentDescription = "${ui.session.branding.name} logo" },
-                            contentAlignment = Alignment.Center,
-                        ) { Text(ui.session.branding.logoText, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 17.sp) }
+                        else Box {
+                            var open by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+                            Box(
+                                Modifier.size(48.dp).clip(CircleShape).background(Color.White).border(3.dp, extra.gold, CircleShape)
+                                    .let { m -> if (logoMenu != null) m.clickable(onClickLabel = "Choose league", role = Role.Button) { open = true } else m }
+                                    .semantics { contentDescription = if (logoMenu != null) "${ui.session.branding.name}. Choose league" else "${ui.session.branding.name} logo" },
+                                contentAlignment = Alignment.Center,
+                            ) { Text(ui.session.branding.logoText, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 17.sp) }
+                            if (logoMenu != null) {
+                                Box(
+                                    Modifier.align(Alignment.BottomEnd).size(18.dp).clip(CircleShape).background(extra.ink),
+                                    contentAlignment = Alignment.Center,
+                                ) { Icon(Icons.Filled.KeyboardArrowDown, null, tint = extra.onInk, modifier = Modifier.size(14.dp)) }
+                                androidx.compose.material3.DropdownMenu(
+                                    expanded = open, onDismissRequest = { open = false },
+                                    shape = RoundedCornerShape(20.dp), containerColor = MaterialTheme.colorScheme.surface,
+                                ) { logoMenu { open = false } }
+                            }
+                        }
                         if (back) Text(title, color = OnHero, fontSize = 16.sp, fontWeight = FontWeight.Medium, maxLines = 1,
                             overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                         else Spacer(Modifier.weight(1f))
@@ -149,6 +168,8 @@ fun Page(
                     }
                     if (!back) Text(title, color = OnHero, fontSize = 26.sp, fontWeight = FontWeight.Bold, maxLines = 2,
                         overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 18.dp))
+                    if (!back && subtitle != null) Text(subtitle, color = OnHero.copy(alpha = 0.8f), fontSize = 14.sp, maxLines = 1,
+                        overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp))
                     if (hero != null) Column(Modifier.padding(top = 16.dp)) { hero() }
                 }
             }
@@ -157,6 +178,51 @@ fun Page(
             Modifier.fillMaxSize().clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
                 .background(MaterialTheme.colorScheme.background),
         ) { content() }
+    }
+}
+
+/**
+ * Match card from the reference: white body with softly rounded sides, concave top and bottom edges,
+ * a thin brand-coloured line drawn only along those two curves, and a badge sitting on the top line.
+ */
+@Composable
+fun WaveCard(modifier: Modifier = Modifier, onClick: () -> Unit, badge: @Composable () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+    val line = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+    val fill = MaterialTheme.colorScheme.surface
+    Box(modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+        Box(
+            Modifier.fillMaxWidth().padding(top = 16.dp)
+                .drawBehind {
+                    val r = 36.dp.toPx()
+                    val d = 9.dp.toPx()
+                    val w = size.width
+                    val hh = size.height
+                    val body = androidx.compose.ui.graphics.Path().apply {
+                        moveTo(0f, r)
+                        quadraticTo(0f, 0f, r, 0f)
+                        quadraticTo(w / 2f, d * 2f, w - r, 0f)
+                        quadraticTo(w, 0f, w, r)
+                        lineTo(w, hh - r)
+                        quadraticTo(w, hh, w - r, hh)
+                        quadraticTo(w / 2f, hh - d * 2f, r, hh)
+                        quadraticTo(0f, hh, 0f, hh - r)
+                        close()
+                    }
+                    drawPath(body, fill)
+                    val stroke = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.6.dp.toPx())
+                    val top = androidx.compose.ui.graphics.Path().apply {
+                        moveTo(r * 0.7f, 0f); quadraticTo(w / 2f, d * 2f, w - r * 0.7f, 0f)
+                    }
+                    val bottom = androidx.compose.ui.graphics.Path().apply {
+                        moveTo(r * 0.7f, hh); quadraticTo(w / 2f, hh - d * 2f, w - r * 0.7f, hh)
+                    }
+                    drawPath(top, line, style = stroke)
+                    drawPath(bottom, line, style = stroke)
+                }
+                .clip(RoundedCornerShape(36.dp))
+                .clickable(onClick = onClick),
+        ) { Column(Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 20.dp)) { content() } }
+        Box(Modifier.align(Alignment.TopCenter)) { badge() }
     }
 }
 
