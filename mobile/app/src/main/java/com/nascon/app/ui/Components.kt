@@ -95,6 +95,8 @@ fun Bar(title: String, onBack: (() -> Unit)? = null, logo: String? = null, actio
         },
         actions = { actions() },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface),
+        windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
+        expandedHeight = 56.dp,
     )
 }
 
@@ -137,9 +139,9 @@ fun time(ms: Long): String = SimpleDateFormat("HH:mm", Locale.getDefault()).form
 
 @Composable
 fun SectionLabel(text: String, modifier: Modifier = Modifier, trailing: @Composable () -> Unit = {}) {
-    Row(modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 16.dp, bottom = 6.dp),
+    Row(modifier.fillMaxWidth().padding(start = 20.dp, end = 12.dp, top = 20.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically) {
-        Text(text.uppercase(), style = MaterialTheme.typography.labelSmall, color = extra.muted, modifier = Modifier.weight(1f))
+        Text(text, fontSize = 19.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
         trailing()
     }
 }

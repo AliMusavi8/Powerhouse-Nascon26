@@ -30,6 +30,8 @@ data class Extra(
     val gold: Color,
     val muted: Color,
     val line: Color,
+    val ink: Color = Color.Black,
+    val onInk: Color = Color.White,
 )
 
 val LocalExtra = staticCompositionLocalOf {
@@ -39,7 +41,7 @@ val LocalExtra = staticCompositionLocalOf {
 val Numbers = FontFamily.SansSerif
 private val Condensed = FontFamily(android.graphics.Typeface.create("sans-serif-condensed", android.graphics.Typeface.NORMAL))
 
-val ScoreStyle = TextStyle(fontFamily = Condensed, fontWeight = FontWeight.SemiBold, fontSize = 44.sp, lineHeight = 46.sp)
+val ScoreStyle = TextStyle(fontWeight = FontWeight.Bold, fontSize = 34.sp, lineHeight = 38.sp, letterSpacing = 1.sp)
 val NumStyle = TextStyle(fontFamily = Condensed, fontWeight = FontWeight.Medium, fontSize = 15.sp)
 
 @Composable
@@ -63,13 +65,13 @@ fun AppTheme(branding: Branding?, content: @Composable () -> Unit) {
     ) else lightColorScheme(
         primary = primary, onPrimary = Color.White,
         secondary = gold, onSecondary = Color(0xFF1A1400),
-        background = Color(0xFFF4F4F5), onBackground = Color(0xFF16171A),
+        background = Color(0xFFF6F3EA), onBackground = Color(0xFF16171A),
         surface = Color.White, onSurface = Color(0xFF16171A),
-        surfaceVariant = Color(0xFFF1F2F4), onSurfaceVariant = Color(0xFF6A6D75),
-        surfaceContainer = Color.White, surfaceContainerHigh = Color(0xFFF1F2F4),
+        surfaceVariant = Color(0xFFF1EDE2), onSurfaceVariant = Color(0xFF6B6A63),
+        surfaceContainer = Color.White, surfaceContainerHigh = Color(0xFFF1EDE2),
         surfaceContainerLow = Color(0xFFF8F8F9), surfaceContainerLowest = Color.White,
         surfaceContainerHighest = Color(0xFFE9EAED),
-        outline = Color(0xFFC9CBD1), outlineVariant = Color(0xFFE5E6E9),
+        outline = Color(0xFFCFC9B8), outlineVariant = Color(0xFFE9E4D6),
         error = Color(0xFFB42318), onError = Color.White,
         primaryContainer = Color(0xFFEAF0FD), onPrimaryContainer = Color(0xFF0D2A85),
         secondaryContainer = Color(0xFFF1F2F4), onSecondaryContainer = Color(0xFF16171A),
@@ -78,15 +80,17 @@ fun AppTheme(branding: Branding?, content: @Composable () -> Unit) {
         link = Color(0xFF7299FF), tint = Color(0xFF18223F), live = Color(0xFFFF5C55),
         ok = Color(0xFF52C48D), okBg = Color(0xFF13271D), bad = Color(0xFFF7766C), badBg = Color(0xFF2C1715),
         warn = Color(0xFFF2C14E), warnBg = Color(0xFF2A2312), gold = gold, muted = Color(0xFF999CA4), line = Color(0xFF2A2B30),
+        ink = Color(0xFFF2F2F2), onInk = Color(0xFF111111),
     ) else Extra(
         link = primary, tint = Color(0xFFEAF0FD), live = Color(0xFFD12C2C),
         ok = Color(0xFF1C7A44), okBg = Color(0xFFE6F3EB), bad = Color(0xFFB42318), badBg = Color(0xFFFCEBE9),
-        warn = Color(0xFF7A5300), warnBg = Color(0xFFFFF3D1), gold = gold, muted = Color(0xFF6A6D75), line = Color(0xFFE5E6E9),
+        warn = Color(0xFF7A5300), warnBg = Color(0xFFFFF3D1), gold = gold, muted = Color(0xFF6B6A63), line = Color(0xFFE9E4D6),
+        ink = Color(0xFF111111), onInk = Color.White,
     )
     val base = Typography()
     val type = base.copy(
-        titleLarge = base.titleLarge.copy(fontSize = 20.sp, fontWeight = FontWeight.Medium),
-        titleMedium = base.titleMedium.copy(fontSize = 16.sp, fontWeight = FontWeight.Medium),
+        titleLarge = base.titleLarge.copy(fontSize = 22.sp, fontWeight = FontWeight.Bold),
+        titleMedium = base.titleMedium.copy(fontSize = 17.sp, fontWeight = FontWeight.SemiBold),
         labelSmall = base.labelSmall.copy(fontSize = 11.sp, letterSpacing = 0.8.sp, fontWeight = FontWeight.Medium),
     )
     CompositionLocalProvider(LocalExtra provides extra) {

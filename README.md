@@ -130,7 +130,7 @@ The app is sport-agnostic: no sport or event names appear in the code. Event but
 
 ### Offline behaviour
 
-- Every screen is read network-first and saved to Room; in airplane mode the saved copy opens with an "Offline · showing data saved HH:MM" bar.
+- Every screen is read network-first and saved to Room; in airplane mode the saved copy opens with an "Offline Â· showing data saved HH:MM" bar.
 - Score and roster actions made offline are stored in the Room `pending_actions` table in the exact `/api/v1/sync` action format, survive a force-close, and show as "Pending" in the match timeline, the roster and the Saved actions screen.
 - When the network returns, a WorkManager job (network-connected constraint) replays the queue; there is also a **Sync now** button. Each action is grouped by the account that created it and sent with that account's token.
 - Results are shown per action in plain language (for example `SQUAD_FULL` becomes "The destination squad is full.") and the queue empties.

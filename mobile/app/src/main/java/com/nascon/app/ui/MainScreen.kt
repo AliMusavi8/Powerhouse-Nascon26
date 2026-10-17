@@ -106,8 +106,8 @@ fun MainScreen(session: SessionState) {
                             icon = { Icon(t.icon, contentDescription = null) },
                             label = { Text(t.label) },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = extra.link, selectedTextColor = extra.link,
-                                indicatorColor = extra.tint,
+                                selectedIconColor = extra.onInk, selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                                indicatorColor = extra.ink, unselectedIconColor = extra.muted, unselectedTextColor = extra.muted,
                             ),
                         )
                     }
@@ -140,27 +140,6 @@ private fun tabOf(route: String) = when {
     route.startsWith("product") || route == "cart" || route.startsWith("receipt") || route == "orders" -> "store"
     route == "queue" -> "profile"
     else -> null
-}
-
-/** Screen frame: top bar, the always-visible connection bar, then content. */
-@Composable
-fun Page(
-    title: String,
-    back: Boolean = false,
-    savedAt: Long? = null,
-    actions: @Composable () -> Unit = {},
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    val g = graph()
-    val ui = LocalUi.current
-    val online by g.network.online.collectAsStateWithLifecycle()
-    val syncing by g.sync.syncing.collectAsStateWithLifecycle()
-    val pending by g.db.actions().observePendingCount().collectAsStateWithLifecycle(0)
-    Column(Modifier.fillMaxSize()) {
-        Bar(title, onBack = if (back) ({ ui.nav.popBackStack() }) else null, logo = ui.session.branding.logoText, actions = actions)
-        NetBar(online, syncing, pending, if (online) null else savedAt) { ui.nav.navigate("queue") { launchSingleTop = true } }
-        content()
-    }
 }
 
 /** League picker data shared by Fixtures and Standings. */

@@ -1,6 +1,16 @@
 package com.nascon.app.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -52,13 +62,22 @@ fun LeaguePicker(leagues: List<Pair<String, String>>) {
     val league = LocalLeague.current
     if (leagues.size < 2) return
     Row(
-        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).horizontalScroll(rememberScrollState())
-            .padding(horizontal = 12.dp, vertical = 4.dp),
+        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         leagues.forEach { (id, name) ->
-            FilterChip(selected = league.leagueId == id, onClick = { league.leagueId = id }, label = { Text(name) },
-                modifier = Modifier.heightIn(min = 40.dp))
+            val sel = league.leagueId == id
+            Box(
+                Modifier.heightIn(min = 40.dp).clip(RoundedCornerShape(50))
+                    .background(if (sel) androidx.compose.ui.graphics.Color.White else androidx.compose.ui.graphics.Color.Transparent)
+                    .border(1.dp, androidx.compose.ui.graphics.Color.White.copy(alpha = 0.45f), RoundedCornerShape(50))
+                    .clickable(role = androidx.compose.ui.semantics.Role.Tab, onClickLabel = name) { league.leagueId = id }
+                    .padding(horizontal = 16.dp, vertical = 9.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(name, fontSize = 14.sp, fontWeight = FontWeight.Medium,
+                    color = if (sel) MaterialTheme.colorScheme.primary else androidx.compose.ui.graphics.Color.White)
+            }
         }
     }
 }
@@ -68,6 +87,8 @@ fun parseTime(s: String?): OffsetDateTime? = try { s?.let { OffsetDateTime.parse
 fun dayLabel(t: OffsetDateTime?) = t?.atZoneSameInstant(ZoneId.systemDefault())?.format(DateTimeFormatter.ofPattern("EEE d MMM", Locale.getDefault())) ?: "Date to be confirmed"
 fun clock(t: OffsetDateTime?) = t?.atZoneSameInstant(ZoneId.systemDefault())?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: "TBC"
 
+fun dayKey(t: OffsetDateTime?) = t?.atZoneSameInstant(ZoneId.systemDefault())?.toLocalDate()?.toString() ?: "tbc"
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FixturesScreen() {
@@ -75,30 +96,49 @@ fun FixturesScreen() {
     val leagues = rememberLeagues()
     val league = LocalLeague.current
     val res = rememberRes(league.leagueId?.let { "/api/v1/leagues/$it/fixtures" })
-    Page(leagues.firstOrNull { it.first == league.leagueId }?.second ?: "Fixtures", savedAt = res.loaded?.savedAt) {
-        LeaguePicker(leagues)
-        if (league.leagueId == null && leagues.isEmpty()) {
-            ResBox(res) {}
-            if (res.loaded == null && res.error == null) return@Page
-        }
+    val fixtures = res.loaded?.data?.arr("fixtures")?.sortedBy { it.str("scheduled_at") ?: "" } ?: emptyList()
+    val days = fixtures.map { dayKey(parseTime(it.str("scheduled_at"))) }.distinct()
+    val today = java.time.LocalDate.now().toString()
+    var picked by rememberSaveable(league.leagueId) { mutableStateOf<String?>(null) }
+    val day = picked?.takeIf { it in days } ?: days.firstOrNull { it >= today } ?: days.lastOrNull()
+    val dayState = rememberLazyListState()
+    LaunchedEffect(days.size) { days.indexOf(day).takeIf { it > 1 }?.let { dayState.scrollToItem(it - 1) } }
+
+    Page(
+        "Scores & Fixtures", savedAt = res.loaded?.savedAt,
+        hero = {
+            LeaguePicker(leagues)
+            if (days.isNotEmpty()) LazyRow(state = dayState, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
+                items(days) { d ->
+                    val date = runCatching { java.time.LocalDate.parse(d) }.getOrNull()
+                    val live = fixtures.any { dayKey(parseTime(it.str("scheduled_at"))) == d && it.str("status") == "in_progress" }
+                    DatePill(
+                        top = date?.dayOfMonth?.toString() ?: "?",
+                        bottom = date?.dayOfWeek?.getDisplayName(java.time.format.TextStyle.SHORT, Locale.getDefault()) ?: "TBC",
+                        selected = d == day, mark = live, onClick = { picked = d },
+                    )
+                }
+            }
+        },
+    ) {
         PullToRefreshBox(isRefreshing = res.loading && res.loaded != null, onRefresh = res.reload, modifier = Modifier.fillMaxSize()) {
-            ResBox(res) { l ->
-                val fixtures = l.data.arr("fixtures").sortedBy { it.str("scheduled_at") ?: "" }
+            ResBox(res) { _ ->
                 if (fixtures.isEmpty()) {
                     Empty(Icons.Filled.CalendarMonth, "No matches yet", "Fixtures appear here once the organiser publishes them.")
                     return@ResBox
                 }
                 val live = fixtures.filter { it.str("status") == "in_progress" }
-                val groups = fixtures.filter { it.str("status") != "in_progress" }.groupBy { dayLabel(parseTime(it.str("scheduled_at"))) }
+                val ofDay = fixtures.filter { dayKey(parseTime(it.str("scheduled_at"))) == day && it.str("status") != "in_progress" }
                 LazyColumn(Modifier.fillMaxSize()) {
                     if (live.isNotEmpty()) {
-                        item { SectionLabel("Live now") }
-                        items(live, key = { "l" + it.str("match_id") }) { FixtureRow(it) { ui.nav.navigate("match/${it.str("match_id")}") } }
+                        item { SectionLabel("Live Now") }
+                        items(live, key = { "l" + it.str("match_id") }) { MatchCard(it) { ui.nav.navigate("match/${it.str("match_id")}") } }
                     }
-                    groups.forEach { (day, list) ->
-                        item(key = "h$day") { SectionLabel(day) }
-                        items(list, key = { it.str("match_id") ?: "" }) { FixtureRow(it) { ui.nav.navigate("match/${it.str("match_id")}") } }
+                    item { SectionLabel(day?.let { d -> runCatching { java.time.LocalDate.parse(d).format(DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.getDefault())) }.getOrNull() } ?: "Matches") }
+                    if (ofDay.isEmpty()) item {
+                        Text("No other matches on this day.", color = extra.muted, modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp))
                     }
+                    items(ofDay, key = { it.str("match_id") ?: "" }) { MatchCard(it) { ui.nav.navigate("match/${it.str("match_id")}") } }
                     item { Box(Modifier.height(24.dp)) }
                 }
             }
@@ -107,49 +147,35 @@ fun FixturesScreen() {
 }
 
 @Composable
-fun FixtureRow(f: JsonObject, onClick: () -> Unit) {
+fun MatchCard(f: JsonObject, onClick: () -> Unit) {
     val status = f.str("status")
     val home = f.obj("home")
     val away = f.obj("away")
-    val done = status == "completed"
     val hs = home?.int("score")
     val aws = away?.int("score")
+    val t = parseTime(f.str("scheduled_at"))
     val desc = buildString {
         append("${home?.str("name")} versus ${away?.str("name")}. ")
-        append(when (status) { "in_progress" -> "Live, $hs to $aws"; "completed" -> "Full time, $hs to $aws"; else -> "Starts ${clock(parseTime(f.str("scheduled_at")))}" })
+        append(when (status) { "in_progress" -> "Live, $hs to $aws"; "completed" -> "Full time, $hs to $aws"; else -> "Starts ${dayLabel(t)} at ${clock(t)}" })
     }
-    Column {
-        Row(
-            Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).clickable(onClickLabel = "Open match", onClick = onClick)
-                .heightIn(min = 64.dp).semantics(mergeDescendants = true) { contentDescription = desc },
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(Modifier.weight(1f).padding(horizontal = 16.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                TeamLine(home, if (status == "upcoming") null else hs, winner = done && (hs ?: 0) > (aws ?: 0), loser = done && (hs ?: 0) < (aws ?: 0))
-                TeamLine(away, if (status == "upcoming") null else aws, winner = done && (aws ?: 0) > (hs ?: 0), loser = done && (aws ?: 0) < (hs ?: 0))
+    BigCard(Modifier.semantics(mergeDescendants = true) { contentDescription = desc }, onClick = onClick) {
+        Column(Modifier.fillMaxWidth().padding(vertical = 14.dp, horizontal = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            when (status) {
+                "in_progress" -> BadgePill("Live", dot = true)
+                "completed" -> BadgePill("Full time", inverted = false)
+                else -> BadgePill(clock(t), inverted = false)
             }
-            VerticalDivider(Modifier.height(40.dp), color = extra.line)
-            Column(Modifier.width(76.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                when (status) {
-                    "in_progress" -> LiveMark()
-                    "completed" -> { Text("FT", fontWeight = FontWeight.Medium); Text("Full time", fontSize = 11.sp, color = extra.muted) }
-                    else -> { Text(clock(parseTime(f.str("scheduled_at"))), fontWeight = FontWeight.Medium); Text("Upcoming", fontSize = 11.sp, color = extra.muted) }
+            Row(Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                TeamBlock(home?.str("name") ?: "To be decided", Modifier.weight(1f))
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(96.dp)) {
+                    Text(if (status == "upcoming") "vs" else "${hs ?: 0}-${aws ?: 0}", style = ScoreStyle, fontSize = 30.sp)
+                    Text(if (status == "upcoming") dayLabel(t) else (if (status == "completed") "Final" else "In play"),
+                        fontSize = 12.sp, color = extra.muted, textAlign = TextAlign.Center)
                 }
+                TeamBlock(away?.str("name") ?: "To be decided", Modifier.weight(1f))
             }
+            f.str("venue")?.let { Text(it, fontSize = 12.sp, color = extra.muted, modifier = Modifier.padding(top = 10.dp)) }
         }
-        Divider()
-    }
-}
-
-@Composable
-private fun TeamLine(team: JsonObject?, score: Int?, winner: Boolean, loser: Boolean) {
-    val name = team?.str("name") ?: team?.str("team_id") ?: "To be decided"
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Crest(name, 22)
-        Text(name, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis,
-            fontWeight = if (winner) FontWeight.Bold else FontWeight.Normal, color = if (loser) extra.muted else MaterialTheme.colorScheme.onSurface)
-        Text(score?.toString() ?: "–", style = NumStyle, fontWeight = if (winner) FontWeight.Bold else FontWeight.Medium,
-            color = if (loser) extra.muted else MaterialTheme.colorScheme.onSurface)
     }
 }
 

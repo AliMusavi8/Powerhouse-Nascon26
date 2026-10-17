@@ -123,34 +123,43 @@ fun MatchScreen(matchId: String) {
             json.parseToJsonElement(it.action).jsonObject.obj("payload")?.str("match_id") == matchId
     }
     val m = res.loaded?.data
-    val title = m?.let { "${it.obj("home")?.str("name")} v ${it.obj("away")?.str("name")}" } ?: "Match"
-    Page(title, back = true, savedAt = res.loaded?.savedAt) {
+    var tab by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(0) }
+    Page(
+        "Match Details", back = true, savedAt = res.loaded?.savedAt,
+        actions = { if (m?.str("status") == "in_progress") BadgePill("Live", dot = true, inverted = false) },
+        hero = { m?.let { HeroScore(it, liveConnected && res.loaded?.fromCache == false) } },
+    ) {
         ResBox(res) { l ->
             val d = l.data
             val canScore = d.bool("can_score") && ui.session.canScore
             Column(Modifier.fillMaxSize()) {
+                PillTabs(listOf("Timeline", "Stats"), tab) { tab = it }
                 LazyColumn(Modifier.weight(1f)) {
-                    item { ScoreHeader(d, liveConnected && !l.fromCache) }
-                    d.obj("pinned_product")?.let { p -> item { PinnedProduct(p) { ui.nav.navigate("product/${p.str("product_id")}") } } }
-                    item { SectionLabel("Timeline") }
-                    items(pendingHere, key = { it.actionId }) { a ->
-                        Column(Modifier.background(extra.warnBg)) {
-                            Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(horizontal = 16.dp, vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                Icon(Icons.Filled.HourglassTop, contentDescription = null, tint = extra.warn, modifier = Modifier.size(18.dp))
-                                Column(Modifier.weight(1f)) {
-                                    Text(a.title, fontWeight = FontWeight.Medium)
-                                    Text("Pending � saved offline at ${time(a.createdAt)}", fontSize = 12.sp, color = extra.warn)
+                    if (tab == 1) {
+                        item { StatsCard(d) }
+                    } else {
+                        d.obj("pinned_product")?.let { p -> item { PinnedProduct(p) { ui.nav.navigate("product/${p.str("product_id")}") } } }
+                        item { SectionLabel("Time Line") }
+                        val events = d.arr("events").reversed()
+                        if (events.isEmpty() && pendingHere.isEmpty()) item {
+                            Empty(Icons.Filled.Timeline, "No events yet", if (d.str("status") == "upcoming") "The match hasn't started." else "Events appear here as they happen.")
+                        } else item {
+                            BigCard {
+                                pendingHere.forEach { a ->
+                                    Row(Modifier.fillMaxWidth().background(extra.warnBg).heightIn(min = 52.dp).padding(horizontal = 16.dp, vertical = 8.dp),
+                                        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                        Icon(Icons.Filled.HourglassTop, contentDescription = null, tint = extra.warn, modifier = Modifier.size(18.dp))
+                                        Column(Modifier.weight(1f)) {
+                                            Text(a.title, fontWeight = FontWeight.Medium)
+                                            Text("Pending · saved offline at ${time(a.createdAt)}", fontSize = 12.sp, color = extra.warn)
+                                        }
+                                    }
+                                    Divider()
                                 }
+                                events.forEachIndexed { i, e -> EventRow(e, d, last = i == events.lastIndex) }
                             }
-                            Divider()
                         }
                     }
-                    val events = d.arr("events").reversed()
-                    if (events.isEmpty() && pendingHere.isEmpty()) item {
-                        Empty(Icons.Filled.Timeline, "No events yet", if (d.str("status") == "upcoming") "The match hasn't started." else "Events appear here as they happen.")
-                    }
-                    items(events, key = { it.str("event_id") ?: it.int("sequence").toString() }) { EventRow(it, d) }
                     item { Box(Modifier.height(16.dp)) }
                 }
                 if (canScore) OrganiserBar(matchId, d) { res.reload() }
@@ -159,14 +168,8 @@ fun MatchScreen(matchId: String) {
     }
 }
 
-private fun teamName(d: JsonObject, teamId: String?): String = when (teamId) {
-    d.obj("home")?.str("team_id") -> d.obj("home")?.str("name") ?: "Home"
-    d.obj("away")?.str("team_id") -> d.obj("away")?.str("name") ?: "Away"
-    else -> teamId ?: ""
-}
-
 @Composable
-private fun ScoreHeader(d: JsonObject, live: Boolean) {
+private fun HeroScore(d: JsonObject, live: Boolean) {
     val home = d.obj("home")
     val away = d.obj("away")
     val status = d.str("status")
@@ -174,34 +177,72 @@ private fun ScoreHeader(d: JsonObject, live: Boolean) {
         append(s?.int("score") ?: 0)
         s?.int("wickets")?.let { append("/$it") }
     }
+    val white = androidx.compose.ui.graphics.Color.White
+    val soft = white.copy(alpha = 0.75f)
     val desc = "${home?.str("name")} ${scoreText(home)}, ${away?.str("name")} ${scoreText(away)}. " + statusText(status, d)
-    Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(Modifier.fillMaxWidth().semantics(mergeDescendants = true) { contentDescription = desc }, verticalAlignment = Alignment.CenterVertically) {
-            TeamCol(home, Modifier.weight(1f))
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(scoreText(home), style = ScoreStyle)
-                    Text("–", style = ScoreStyle, color = extra.muted, fontWeight = FontWeight.Light)
-                    Text(scoreText(away), style = ScoreStyle)
-                }
-                if (home?.str("overs") != null) Text("${home.str("overs")} ov  ·  ${away?.str("overs")} ov", fontSize = 12.sp, color = extra.muted)
-            }
-            TeamCol(away, Modifier.weight(1f))
+    Row(Modifier.fillMaxWidth().semantics(mergeDescendants = true) { contentDescription = desc }, verticalAlignment = Alignment.CenterVertically) {
+        TeamBlock(home?.str("name") ?: "", Modifier.weight(1f), crest = 58, color = white)
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(horizontal = 4.dp)) {
+            Text(if (status == "upcoming") "vs" else "${scoreText(home)}-${scoreText(away)}", style = ScoreStyle, color = white)
+            if (home?.str("overs") != null) Text("${home.str("overs")} ov · ${away?.str("overs")} ov", fontSize = 12.sp, color = soft)
+            Text(statusText(status, d), fontSize = 12.sp, color = soft)
+            parseTime(d.str("scheduled_at"))?.let { Text("${dayLabel(it)} · ${clock(it)}", fontSize = 12.sp, color = soft) }
+            d.str("venue")?.let { Text(it, fontSize = 12.sp, color = soft, textAlign = TextAlign.Center) }
+            if (status == "in_progress") Text(if (live) "Live updates on" else "Reconnecting…", fontSize = 11.sp, color = soft)
         }
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            when (status) {
-                "in_progress" -> LiveMark()
-                "completed" -> Chip("Full time", extra.muted, MaterialTheme.colorScheme.surfaceVariant, Icons.Filled.Flag)
-                else -> Chip("Upcoming", extra.muted, MaterialTheme.colorScheme.surfaceVariant)
-            }
-            val info = listOfNotNull(d.str("venue"), parseTime(d.str("scheduled_at"))?.let { "${dayLabel(it)} ${clock(it)}" }).joinToString(" · ")
-            if (info.isNotBlank()) Text(info, fontSize = 12.sp, color = extra.muted)
-        }
-        if (status == "completed") Text(statusText(status, d), fontSize = 13.sp, color = extra.muted)
-        if (status == "in_progress") Text(if (live) "Live updates on" else "Live updates paused · reconnecting", fontSize = 11.sp, color = extra.muted)
+        TeamBlock(away?.str("name") ?: "", Modifier.weight(1f), crest = 58, color = white)
     }
-    Divider()
+}
+
+/** Team stats derived from the event log; rows come from the sport's own scoring events. */
+@Composable
+private fun StatsCard(d: JsonObject) {
+    val home = d.obj("home")
+    val away = d.obj("away")
+    val hid = home?.str("team_id")
+    val aid = away?.str("team_id")
+    val live = d.arr("events").filter { !it.bool("compensated") }
+    fun count(type: String, et: String? = null, team: String?) = live.count {
+        it.str("type") == type && it.obj("payload")?.str("team_id") == team && (et == null || it.obj("payload")?.str("event_type") == et)
+    }
+    fun sumDisc(team: String?) = live.filter { it.str("type") == "discipline" && it.obj("payload")?.str("team_id") == team }.sumOf { it.obj("payload")?.int("points") ?: 0 }
+    val rows = buildList {
+        add(Triple("Score", (home?.int("score") ?: 0).toString(), (away?.int("score") ?: 0).toString()))
+        d.strings("scoring_events").forEach { et -> add(Triple(Messages.label(et), count("score", et, hid).toString(), count("score", et, aid).toString())) }
+        if (home?.int("wickets") != null) add(Triple("Wickets", home.int("wickets").toString(), (away?.int("wickets") ?: 0).toString()))
+        if (home?.str("overs") != null) add(Triple("Overs", home.str("overs") ?: "0", away?.str("overs") ?: "0"))
+        add(Triple("Discipline points", sumDisc(hid).toString(), sumDisc(aid).toString()))
+        add(Triple("Corrections", live.count { it.str("type") == "compensation" }.toString(), ""))
+    }
+    BigCard {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+            BigCrest(home?.str("name") ?: "", 36)
+            Text("TEAM STATS", Modifier.weight(1f), textAlign = TextAlign.Center, fontWeight = FontWeight.Medium, letterSpacing = 0.5.sp)
+            BigCrest(away?.str("name") ?: "", 36)
+        }
+        rows.forEach { (label, l, r) ->
+            val ln = l.toDoubleOrNull()
+            val rn = r.toDoubleOrNull()
+            val lBest = ln != null && rn != null && ln > rn
+            val rBest = ln != null && rn != null && rn > ln
+            Row(Modifier.fillMaxWidth().heightIn(min = 44.dp).padding(horizontal = 20.dp)
+                .semantics(mergeDescendants = true) { contentDescription = "$label: ${home?.str("name")} $l, ${away?.str("name")} $r" },
+                verticalAlignment = Alignment.CenterVertically) {
+                Text(l, Modifier.width(56.dp), color = if (lBest) extra.link else MaterialTheme.colorScheme.onSurface,
+                    fontWeight = if (lBest) FontWeight.Bold else FontWeight.Normal, fontSize = 15.sp)
+                Text(label, Modifier.weight(1f), textAlign = TextAlign.Center, fontSize = 15.sp)
+                Text(r, Modifier.width(56.dp), textAlign = TextAlign.End, color = if (rBest) extra.link else MaterialTheme.colorScheme.onSurface,
+                    fontWeight = if (rBest) FontWeight.Bold else FontWeight.Normal, fontSize = 15.sp)
+            }
+        }
+        Box(Modifier.height(8.dp))
+    }
+}
+
+private fun teamName(d: JsonObject, teamId: String?): String = when (teamId) {
+    d.obj("home")?.str("team_id") -> d.obj("home")?.str("name") ?: "Home"
+    d.obj("away")?.str("team_id") -> d.obj("away")?.str("name") ?: "Away"
+    else -> teamId ?: ""
 }
 
 private fun statusText(status: String?, d: JsonObject): String = when (status) {
@@ -215,33 +256,25 @@ private fun statusText(status: String?, d: JsonObject): String = when (status) {
 }
 
 @Composable
-private fun TeamCol(t: JsonObject?, modifier: Modifier) {
-    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Crest(t?.str("name") ?: "", 40)
-        Text(t?.str("name") ?: "", textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis, fontSize = 13.sp, fontWeight = FontWeight.Medium)
-    }
-}
-
-@Composable
 private fun PinnedProduct(p: JsonObject, onBuy: () -> Unit) {
     val v = p.arr("variants").firstOrNull()
     SectionLabel("Pinned by the club")
-    Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).clickable(onClickLabel = "Open product", onClick = onBuy)
-        .padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Box(Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
-            Icon(Icons.Filled.ShoppingBag, null, tint = extra.muted)
+    BigCard(onClick = onBuy) {
+        Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Box(Modifier.size(56.dp).clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)), contentAlignment = Alignment.Center) {
+                Icon(Icons.Filled.ShoppingBag, null, tint = MaterialTheme.colorScheme.primary)
+            }
+            Column(Modifier.weight(1f)) {
+                Text(p.str("name") ?: "", fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(money(v?.long("price_minor"), v?.str("currency")), color = extra.muted)
+            }
+            Button(onClick = onBuy, modifier = Modifier.heightIn(min = 48.dp)) { Text("Buy") }
         }
-        Column(Modifier.weight(1f)) {
-            Text(p.str("name") ?: "", fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(money(v?.long("price_minor"), v?.str("currency")), style = NumStyle, color = extra.muted)
-        }
-        Button(onClick = onBuy, modifier = Modifier.heightIn(min = 48.dp)) { Text("Buy") }
     }
-    Divider()
 }
 
 @Composable
-private fun EventRow(e: JsonObject, d: JsonObject) {
+private fun EventRow(e: JsonObject, d: JsonObject, last: Boolean = false) {
     val p = e.obj("payload") ?: JsonObject(emptyMap())
     val type = e.str("type")
     val compensated = e.bool("compensated")
@@ -254,8 +287,8 @@ private fun EventRow(e: JsonObject, d: JsonObject) {
         "match_end" -> "Match ended" to ""
         else -> Messages.label(type) to ""
     }
-    Column(Modifier.background(MaterialTheme.colorScheme.surface)) {
-        Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(horizontal = 16.dp, vertical = 8.dp),
+    Column {
+        Row(Modifier.fillMaxWidth().heightIn(min = 52.dp).padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("#${e.int("sequence") ?: ""}", style = NumStyle, color = extra.muted, modifier = Modifier.width(32.dp))
             Icon(when (type) { "compensation" -> Icons.AutoMirrored.Filled.Undo; "match_start" -> Icons.Filled.PlayArrow; "match_end" -> Icons.Filled.Flag; else -> Icons.Filled.SportsScore },
@@ -267,7 +300,7 @@ private fun EventRow(e: JsonObject, d: JsonObject) {
             }
             if (compensated) Chip("Corrected", extra.muted, MaterialTheme.colorScheme.surfaceVariant)
         }
-        Divider()
+        if (!last) Divider()
     }
 }
 
