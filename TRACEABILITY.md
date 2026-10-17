@@ -18,6 +18,28 @@ Every functional (FR) and non-functional (NFR) requirement mapped to source file
 | FR-2.3 | Merchandise store, variants, discount, mock gateway, PDF receipt, order events | `backend/app/domain/store.py`, `backend/app/services/store.py`, `backend/app/services/pdf.py`, `backend/app/services/queue.py`, `backend/worker.py` | `tests/unit/test_store.py`, `tests/integration/test_store_api.py` |
 | FR-5.1 | Five-tier RBAC, scoped permissions, negative tests | `backend/app/domain/rbac.py`, `backend/app/auth.py`, `backend/app/routes/rbac.py` | `tests/unit/test_rbac.py`, `tests/integration/test_rbac_api.py` |
 | NFR-3 | Concurrency correctness (no overselling) | `backend/app/services/store.py` (`_reserve`), `backend/app/schema.sql` (`CHECK stock >= 0`) | `tests/integration/test_store_api.py::test_twenty_concurrent_buyers_one_unit` |
-| NFR-4 | Offline tolerance: cache, persistent queue, sync with conflicts | `backend/app/domain/sync.py`, `backend/app/services/sync.py`, `mobile/` (Room cache, pending-action queue, SyncWorker) | `tests/unit/test_sync.py`, `tests/integration/test_sync_api.py` |
+| NFR-4 | Offline tolerance: cache, persistent queue, sync with conflicts | `backend/app/domain/sync.py`, `backend/app/services/sync.py`, `mobile/app/src/main/java/com/nascon/app/data/Repo.kt` (Room cache), `data/Db.kt` (`pending_actions`), `data/Sync.kt` (queue, `SyncWorker`, `NetworkMonitor`), `ui/ProfileScreens.kt` (`QueueScreen`) | `tests/unit/test_sync.py`, `tests/integration/test_sync_api.py` |
 | NFR-5 | Security: JWT verification, rate limiting, input validation, body limit | `backend/app/auth.py`, `backend/app/main.py` (rate limit, 413), `backend/app/domain/validate.py` | `tests/integration/test_rbac_api.py::test_token_attacks`, `::test_rate_limit`, `tests/integration/test_scoring_api.py::test_validation_and_limits` |
 | NFR-7 | Reproducibility: one-command stack, repeatable reset | `docker-compose.yml`, `backend/Dockerfile`, `backend/app/seed.py`, `backend/app/db.py` | `tests/integration/conftest.py` (reset before each test) |
+
+## Mobile app (spec section 8)
+
+Paths are relative to `mobile/app/src/main/java/com/nascon/app/`.
+
+| Spec | Requirement | Source |
+|---|---|---|
+| 8.2 | Login, server address, role-aware home | `ui/LoginScreen.kt`, `data/Session.kt`, `ui/MainScreen.kt` |
+| 8.2 | Fixtures list with status and time | `ui/LeagueScreens.kt` (`FixturesScreen`) |
+| 8.2 | Match detail: live score (WebSocket), timeline, pinned product | `ui/MatchScreen.kt` |
+| 8.2 | Standings with qualification status | `ui/LeagueScreens.kt` (`StandingsScreen`) |
+| 8.2 | Club profile: info, roster, staff, venue | `ui/ClubScreens.kt` (`ClubScreen`, `Info`) |
+| 8.2 | Store: catalogue, variants, cart, checkout, receipt PDF | `ui/StoreScreens.kt` |
+| 8.2 | Roster management (club manager) | `ui/ClubScreens.kt` (`RosterDialog`, `AddPlayerDialog`) |
+| 8.2 | Scoring entry and compensating event (league organiser) | `ui/MatchScreen.kt` (`OrganiserBar`) |
+| 8.2 | Sync status indicator and pending queue | `ui/Components.kt` (`NetBar`), `ui/ProfileScreens.kt` (`QueueScreen`) |
+| 8.4 | Cache in local database, offline indicator | `data/Repo.kt`, `data/Db.kt`, `ui/Components.kt` (`NetBar`) |
+| 8.4 | Persistent queue in the 5.14 format, survives force-close | `data/Sync.kt` (`SyncManager.send`), `data/Db.kt` (`PendingAction`) |
+| 8.4 | Automatic sync on reconnect and Sync button, plain-language results | `data/Sync.kt` (`SyncWorker`, `syncNow`), `data/Messages.kt` |
+| 8.6 | Tenant branding, light and dark themes, 48 dp targets, status not by colour alone | `ui/Theme.kt`, `ui/Components.kt` |
+| 8.6 | Confirm risky actions, empty and loading states, plain errors | `ui/Components.kt` (`Confirm`, `Empty`, `Loading`, `ErrorState`), `data/Messages.kt` |
+| NFR-5 | JWT encrypted with an Android Keystore AES-GCM key | `data/Security.kt` |

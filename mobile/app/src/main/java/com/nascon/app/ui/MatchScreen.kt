@@ -25,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.SportsScore
@@ -62,6 +63,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nascon.app.data.Messages
 import com.nascon.app.data.Outcome
 import com.nascon.app.data.arr
@@ -115,6 +117,11 @@ fun MatchScreen(matchId: String) {
         onDispose { closed = true; handler.removeCallbacksAndMessages(null); socket?.close(1000, null) }
     }
 
+    val queued by g.db.actions().observeAll().collectAsStateWithLifecycle(emptyList())
+    val pendingHere = queued.filter {
+        it.state == com.nascon.app.data.PendingAction.STATE_PENDING && it.type == "score_event" &&
+            json.parseToJsonElement(it.action).jsonObject.obj("payload")?.str("match_id") == matchId
+    }
     val m = res.loaded?.data
     val title = m?.let { "${it.obj("home")?.str("name")} v ${it.obj("away")?.str("name")}" } ?: "Match"
     Page(title, back = true, savedAt = res.loaded?.savedAt) {
@@ -126,8 +133,21 @@ fun MatchScreen(matchId: String) {
                     item { ScoreHeader(d, liveConnected && !l.fromCache) }
                     d.obj("pinned_product")?.let { p -> item { PinnedProduct(p) { ui.nav.navigate("product/${p.str("product_id")}") } } }
                     item { SectionLabel("Timeline") }
+                    items(pendingHere, key = { it.actionId }) { a ->
+                        Column(Modifier.background(extra.warnBg)) {
+                            Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(horizontal = 16.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Icon(Icons.Filled.HourglassTop, contentDescription = null, tint = extra.warn, modifier = Modifier.size(18.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Text(a.title, fontWeight = FontWeight.Medium)
+                                    Text("Pending · saved offline at ${time(a.createdAt)}", fontSize = 12.sp, color = extra.warn)
+                                }
+                            }
+                            Divider()
+                        }
+                    }
                     val events = d.arr("events").reversed()
-                    if (events.isEmpty()) item {
+                    if (events.isEmpty() && pendingHere.isEmpty()) item {
                         Empty(Icons.Filled.Timeline, "No events yet", if (d.str("status") == "upcoming") "The match hasn't started." else "Events appear here as they happen.")
                     }
                     items(events, key = { it.str("event_id") ?: it.int("sequence").toString() }) { EventRow(it, d) }

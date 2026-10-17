@@ -91,13 +91,54 @@ RUN_INTEGRATION=1 ./run_tests.sh     # also grader-style HTTP tests against the 
 
 ## Mobile app
 
-The source is in `mobile/`. The installable build is `mobile/release/app-release.apk` (Android 10 / API 29 or newer).
+The source is in `mobile/` (Kotlin, Jetpack Compose, Room, WorkManager, OkHttp). The installable build is `mobile/release/app-release.apk` (minSdk 26, so Android 8.0+ including Android 10).
+
+### Install and connect
 
 1. Start the backend on the laptop.
-2. Install the APK, then open **Settings** on the login screen and set the server address:
-   - emulator: `http://10.0.2.2:8080`;
+2. Install the APK (`adb install mobile/release/app-release.apk`).
+3. On the login screen tap **Server: ...** and set the address:
+   - emulator: `http://10.0.2.2:8080` (default);
    - phone on the same network: `http://<laptop-LAN-IP>:8080`.
-3. Sign in with one of the demo accounts above.
+4. Sign in with a demo account (tap one in the list to fill it in).
+
+### Build from source
+
+```bash
+cd mobile
+./gradlew assembleDebug          # debug build
+./gradlew assembleRelease        # signed release build
+```
+
+The release build reads its signing key from `mobile/local.properties` (`release.storeFile`, `release.storePassword`, `release.keyAlias`, `release.keyPassword`). The keystore and passwords are not committed.
+
+### Screens
+
+| Screen | Who | Notes |
+|---|---|---|
+| Login | everyone | Email + password, editable server address, offline sign-in for accounts used before on the device |
+| Fixtures | everyone | Grouped by day, live matches first, status as text and marker |
+| Match | everyone | Large score, live updates over WebSocket, timeline with corrections, pinned product |
+| Scoring | league organiser | Start/end match, score events built from the sport config (`scoring_events`), discipline, tie-break winner, correction (compensating event) |
+| Standings | everyone | Table with qualification status as icon + text + key, qualification cut line, tie-break notes |
+| Club | everyone | Info, home venue, staff, socials, history, roster, recent moves |
+| Roster management | club manager | Add player, transfer, loan, release, each confirmed in a dialog |
+| Store | everyone | Catalogue, variant picker, cart, discount code, test card choice, receipt with view, download and share PDF, order history |
+| Saved actions | everyone | Pending queue and per-action results in plain language |
+
+The app is sport-agnostic: no sport or event names appear in the code. Event buttons and labels come from the server (`three_pointer` is shown as "Three pointer"), and innings fields (wickets, overs) are shown only when the server sends them.
+
+### Offline behaviour
+
+- Every screen is read network-first and saved to Room; in airplane mode the saved copy opens with an "Offline · showing data saved HH:MM" bar.
+- Score and roster actions made offline are stored in the Room `pending_actions` table in the exact `/api/v1/sync` action format, survive a force-close, and show as "Pending" in the match timeline, the roster and the Saved actions screen.
+- When the network returns, a WorkManager job (network-connected constraint) replays the queue; there is also a **Sync now** button. Each action is grouped by the account that created it and sent with that account's token.
+- Results are shown per action in plain language (for example `SQUAD_FULL` becomes "The destination squad is full.") and the queue empties.
+
+### Security
+
+- The JWT is encrypted with an AES-256-GCM key held in the Android Keystore (`mobile/app/src/main/java/com/nascon/app/data/Security.kt`).
+- Cleartext HTTP is allowed through `res/xml/network_security_config.xml` because the backend runs on plain HTTP on the LAN.
 
 ## Repository map
 

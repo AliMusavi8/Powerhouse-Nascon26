@@ -32,7 +32,7 @@ import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.OpenInNew
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Share
@@ -365,7 +365,7 @@ fun ReceiptScreen(orderId: String) {
             SectionLabel("Receipt PDF")
             Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = { withPdf { open(ctx, it) } }, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                    Icon(Icons.Filled.OpenInNew, null); Text("  View PDF")
+                    Icon(Icons.AutoMirrored.Filled.OpenInNew, null); Text("  View PDF")
                 }
                 OutlinedButton(onClick = { withPdf { saved -> ui.toast(if (saveToDownloads(ctx, saved)) "Saved to Downloads." else "Couldn't save; use Share instead.") } },
                     enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Icon(Icons.Filled.Download, null); Text("  Download") }
