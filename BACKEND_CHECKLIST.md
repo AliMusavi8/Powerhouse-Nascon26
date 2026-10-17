@@ -46,11 +46,11 @@ Legend: `[x]` done · `[ ]` pending
 - [x] Unit tests
 
 ## Phase 5: Store (FR-2.3, NFR-3)
-- [ ] Atomic stock reservation, mock gateway, discount
-- [ ] Signed receipt + PDF (`PKR 4500.00`)
-- [ ] Order idempotency + domain events to Redis Stream
-- [ ] `GET /audit/v1/inventory/{variant_id}`
-- [ ] 20-thread concurrency test
+- [x] Atomic stock reservation, mock gateway, discount
+- [x] Signed receipt + PDF (`PKR 4500.00`)
+- [x] Order idempotency + domain events to Redis Stream
+- [x] `GET /audit/v1/inventory/{variant_id}`
+- [x] 20-thread concurrency test
 
 ## Phase 6: RBAC & security (FR-5.1, NFR-5)
 - [ ] JWT issue/verify (reject alg:none, tampered, expired)

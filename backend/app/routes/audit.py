@@ -93,3 +93,17 @@ async def roster_transfer(request: Request):
 async def roster_history(player_id: str, as_of: str | None = None):
     from ..services import roster
     return respond(200, await run_in_threadpool(roster.history, player_id, as_of))
+
+
+@router.post("/audit/v1/checkout")
+async def checkout(request: Request):
+    from ..services import store
+    body = await read_object(request)
+    status, result = await run_in_threadpool(store.checkout, body)
+    return respond(status, result)
+
+
+@router.get("/audit/v1/inventory/{variant_id}")
+async def inventory(variant_id: str):
+    from ..services import store
+    return respond(200, await run_in_threadpool(store.inventory, variant_id))
