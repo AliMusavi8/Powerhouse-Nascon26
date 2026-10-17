@@ -38,6 +38,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -154,9 +155,84 @@ fun Page(
             }
         }
         Column(
-            Modifier.fillMaxSize().clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
-                .background(MaterialTheme.colorScheme.background),
+            Modifier.fillMaxSize().padding(top = 0.dp).clip(SheetShape).background(MaterialTheme.colorScheme.background)
+                .padding(top = 14.dp),
         ) { content() }
+    }
+}
+
+/** Sheet outline: the top edge rises in a soft hump toward the middle, with rounded shoulders. */
+val SheetShape = object : androidx.compose.ui.graphics.Shape {
+    override fun createOutline(size: androidx.compose.ui.geometry.Size, layoutDirection: androidx.compose.ui.unit.LayoutDirection, density: androidx.compose.ui.unit.Density): androidx.compose.ui.graphics.Outline {
+        val r = with(density) { 30.dp.toPx() }
+        val d = with(density) { 14.dp.toPx() }
+        val w = size.width
+        val p = androidx.compose.ui.graphics.Path().apply {
+            moveTo(0f, size.height)
+            lineTo(0f, d + r)
+            quadraticTo(0f, d, r, d)
+            quadraticTo(w / 2f, -d, w - r, d)
+            quadraticTo(w, d, w, d + r)
+            lineTo(w, size.height)
+            close()
+        }
+        return androidx.compose.ui.graphics.Outline.Generic(p)
+    }
+}
+
+/** Tall outlined arrow button that sits at either end of the date strip. */
+@Composable
+fun ArrowPill(icon: ImageVector, description: String, enabled: Boolean, onClick: () -> Unit) {
+    Box(
+        Modifier.width(44.dp).height(76.dp).clip(RoundedCornerShape(22.dp)).border(1.dp, HeroLine, RoundedCornerShape(22.dp))
+            .clickable(enabled = enabled, onClickLabel = description, role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = description },
+        contentAlignment = Alignment.Center,
+    ) { Icon(icon, null, tint = if (enabled) OnHero else OnHero.copy(alpha = 0.35f), modifier = Modifier.size(22.dp)) }
+}
+
+/**
+ * Match card from the reference: white body with softly rounded sides, concave top and bottom edges,
+ * a thin brand-coloured line drawn only along those two curves, and a badge sitting on the top line.
+ */
+@Composable
+fun WaveCard(modifier: Modifier = Modifier, onClick: () -> Unit, badge: @Composable () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+    val line = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+    val fill = MaterialTheme.colorScheme.surface
+    Box(modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+        Box(
+            Modifier.fillMaxWidth().padding(top = 16.dp)
+                .drawBehind {
+                    val r = 36.dp.toPx()
+                    val d = 9.dp.toPx()
+                    val w = size.width
+                    val hh = size.height
+                    val body = androidx.compose.ui.graphics.Path().apply {
+                        moveTo(0f, r)
+                        quadraticTo(0f, 0f, r, 0f)
+                        quadraticTo(w / 2f, d * 2f, w - r, 0f)
+                        quadraticTo(w, 0f, w, r)
+                        lineTo(w, hh - r)
+                        quadraticTo(w, hh, w - r, hh)
+                        quadraticTo(w / 2f, hh - d * 2f, r, hh)
+                        quadraticTo(0f, hh, 0f, hh - r)
+                        close()
+                    }
+                    drawPath(body, fill)
+                    val stroke = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.6.dp.toPx())
+                    val top = androidx.compose.ui.graphics.Path().apply {
+                        moveTo(r * 0.55f, r * 0.12f); quadraticTo(r, 0f, r, 0f); quadraticTo(w / 2f, d * 2f, w - r, 0f); quadraticTo(w - r * 0.45f, 0f, w - r * 0.55f, r * 0.12f)
+                    }
+                    val bottom = androidx.compose.ui.graphics.Path().apply {
+                        moveTo(r * 0.55f, hh - r * 0.12f); quadraticTo(r, hh, r, hh); quadraticTo(w / 2f, hh - d * 2f, w - r, hh); quadraticTo(w - r * 0.45f, hh, w - r * 0.55f, hh - r * 0.12f)
+                    }
+                    drawPath(top, line, style = stroke)
+                    drawPath(bottom, line, style = stroke)
+                }
+                .clip(RoundedCornerShape(36.dp))
+                .clickable(onClick = onClick),
+        ) { Column(Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 20.dp)) { content() } }
+        Box(Modifier.align(Alignment.TopCenter)) { badge() }
     }
 }
 
@@ -166,7 +242,7 @@ fun DatePill(top: String, bottom: String, selected: Boolean, onClick: () -> Unit
     val bg = if (selected) extra.ink else Color.White
     val fg = if (selected) extra.onInk else Color(0xFF16171A)
     Column(
-        Modifier.width(54.dp).height(68.dp).clip(RoundedCornerShape(27.dp)).background(bg)
+        Modifier.width(50.dp).height(76.dp).clip(RoundedCornerShape(25.dp)).background(bg)
             .clickable(onClickLabel = "Show $bottom $top", role = Role.Tab, onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
     ) {

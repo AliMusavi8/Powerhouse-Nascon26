@@ -214,8 +214,8 @@ private fun StatsCard(d: JsonObject) {
         add(Triple("Discipline points", sumDisc(hid).toString(), sumDisc(aid).toString()))
         add(Triple("Corrections", live.count { it.str("type") == "compensation" }.toString(), ""))
     }
-    BigCard {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+    Column {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
             BigCrest(home?.str("name") ?: "", 36)
             Text("TEAM STATS", Modifier.weight(1f), textAlign = TextAlign.Center, fontWeight = FontWeight.Medium, letterSpacing = 0.5.sp)
             BigCrest(away?.str("name") ?: "", 36)
