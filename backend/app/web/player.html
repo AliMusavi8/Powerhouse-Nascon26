@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b5d2a">
+  <title>Scorix Live</title>
+  <link rel="stylesheet" href="/web/static/app.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="topbar">
+    <span class="brand" aria-label="Scorix">Scorix</span>
+    <span class="badge" id="viewer-badge">Watching as guest</span>
+  </header>
+
+  <main id="main">
+    <h1 id="page-title" class="title">Live match</h1>
+    <p id="notice" class="notice" role="status" hidden></p>
+
+    <section class="stage" aria-labelledby="page-title">
+      <div class="video-wrap" data-testid="guest-video-player" role="region" aria-label="Live video player">
+        <video id="video" autoplay muted playsinline controls aria-label="Live match video"></video>
+        <div class="overlay" aria-hidden="true">
+          <span id="overlay-score"></span>
+          <span id="overlay-merch"></span>
+        </div>
+        <p id="video-status" class="video-status">Connecting to the live stream…</p>
+      </div>
+
+      <div class="scoreline" aria-label="Live score">
+        <span class="team" id="home-name">Home</span>
+        <span class="score" data-testid="live-score-banner" id="score" role="status" aria-live="polite"
+              aria-atomic="true">0 - 0</span>
+        <span class="team" id="away-name">Away</span>
+      </div>
+      <p class="status" id="match-status"></p>
+    </section>
+
+    <section class="card merch" data-testid="pinned-merch-card" aria-labelledby="merch-name">
+      <div class="merch-art" aria-hidden="true">👕</div>
+      <div class="merch-body">
+        <h2 id="merch-name" class="merch-name">Pinned by the club</h2>
+        <p class="merch-meta"><span id="merch-price"></span> · Size <span id="merch-size">L</span></p>
+      </div>
+      <div class="merch-actions">
+        <button type="button" class="btn primary" data-testid="add-to-guest-cart-btn" id="add-to-cart"
+                aria-label="Add jersey size L to guest cart">Add to cart</button>
+        <p class="cart">In cart: <span data-testid="guest-cart-count" id="cart-count" aria-live="polite">0</span></p>
+        <button type="button" class="btn ghost" id="checkout" aria-label="Proceed to checkout">Proceed to checkout</button>
+      </div>
+    </section>
+
+    <section class="card chat" aria-labelledby="chat-title">
+      <h2 id="chat-title">Live chat</h2>
+      <ul class="messages" data-testid="chat-message-list" id="messages" role="log" aria-live="polite"
+          aria-label="Chat messages" tabindex="0"></ul>
+      <form id="chat-form" class="chat-form" autocomplete="off">
+        <label for="chat-input" class="sr-only">Chat message</label>
+        <input id="chat-input" data-testid="chat-input-field" type="text" maxlength="500"
+               placeholder="Say something about the match" aria-label="Chat message">
+        <button type="submit" class="btn primary" data-testid="chat-send-btn" id="chat-send"
+                aria-label="Send chat message">Send</button>
+      </form>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="auth-backdrop" hidden></div>
+  <div class="modal" data-testid="progressive-auth-modal" id="auth-modal" role="dialog" aria-modal="true"
+       aria-labelledby="auth-title" aria-describedby="auth-desc" hidden>
+    <h2 id="auth-title">Sign in to continue</h2>
+    <p id="auth-desc">Chatting and checkout need a free account. Your cart and your place in the video are kept.</p>
+    <form id="auth-form">
+      <label for="auth-email">Email</label>
+      <input id="auth-email" type="email" autocomplete="username" required>
+      <label for="auth-password">Password</label>
+      <input id="auth-password" type="password" autocomplete="current-password" required>
+      <p id="auth-error" class="error" role="alert"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn ghost" id="auth-cancel">Not now</button>
+        <button type="submit" class="btn primary" id="auth-submit">Sign in</button>
+      </div>
+      <p class="hint">New here? <a href="#" id="auth-register">Create an account</a> in a few seconds.</p>
+    </form>
+  </div>
+
+  <script src="/web/static/hls.min.js" defer></script>
+  <script src="/web/static/app.js" defer></script>
+</body>
+</html>

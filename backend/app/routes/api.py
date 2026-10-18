@@ -449,14 +449,18 @@ async def offline_sync(request: Request):
 
 @ws_router.websocket("/ws/matches/{match_id}")
 async def match_socket(ws: WebSocket, match_id: str):
+    # Subscribing is read-only: members (JWT), guests (guest_* token) and anonymous viewers may listen.
+    # A token that is present but is neither a guest token nor a valid JWT is still rejected.
     token = ws.query_params.get("token", "")
-    try:
-        auth.decode_token(token)
-    except Exception:
-        await ws.close(code=4401)
-        return
+    if token and not token.startswith("guest_"):
+        try:
+            auth.decode_token(token)
+        except Exception:
+            await ws.close(code=4401)
+            return
     await ws.accept()
     q = realtime.subscribe("match:" + match_id)
+    realtime.connection_opened()
     try:
         await ws.send_json({"type": "subscribed", "match_id": match_id})
         while True:
@@ -466,3 +470,4 @@ async def match_socket(ws: WebSocket, match_id: str):
         pass
     finally:
         realtime.unsubscribe("match:" + match_id, q)
+        realtime.connection_closed()

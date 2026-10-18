@@ -57,5 +57,12 @@ def connection_count() -> int:
     return _connections
 
 
-def publish_match(match_id: str) -> None:
-    publish("match:" + match_id, {"type": "match_updated", "match_id": match_id})
+def publish_match(match_id: str, snapshot: dict | None = None) -> None:
+    """Live score push. The score travels in the message so clients update without refetching (NFR-1)."""
+    message = {"type": "match_updated", "match_id": match_id}
+    if snapshot:
+        message.update({k: snapshot[k] for k in ("status", "version") if k in snapshot})
+        for side in ("home", "away"):
+            if side in snapshot:
+                message[side] = {"team_id": snapshot[side]["team_id"], "score": snapshot[side]["score"]}
+    publish("match:" + match_id, message)

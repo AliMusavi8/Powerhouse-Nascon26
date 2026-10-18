@@ -11,7 +11,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import config, db, seed
 from .errors import ApiError
-from .routes import api, audit, day2, rbac
+from .routes import api, audit, day2, guest, rbac, web
 
 log = logging.getLogger("nascon")
 
@@ -84,7 +84,8 @@ def _client_ip(request: Request) -> str:
 
 @app.middleware("http")
 async def _rate_limit(request: Request, call_next):
-    if request.url.path.startswith("/api/v1/"):
+    path = request.url.path
+    if path.startswith("/api/v1/") and not path.startswith("/api/v1/guest/") and not path.endswith("/stream"):
         now = time.monotonic()
         window = config.RATE_LIMIT_WINDOW_SECONDS
         with _hits_lock:
@@ -121,6 +122,9 @@ app.add_middleware(GuestWriteGuard)
 
 app.include_router(audit.router)
 app.include_router(day2.router)
+app.include_router(guest.router)
+app.include_router(guest.ws_router)
+app.include_router(web.router)
 app.include_router(rbac.router)
 app.include_router(api.router)
 app.include_router(api.ws_router)

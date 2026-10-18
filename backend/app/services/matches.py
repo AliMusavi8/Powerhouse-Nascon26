@@ -57,7 +57,11 @@ def append_event(body: dict, cur=None) -> tuple[int, dict]:
     else:
         result = _append(cur, body)
     if result[0] == 201:
-        realtime.publish_match(body["match_id"])
+        try:
+            snapshot = score(body["match_id"])
+        except Exception:
+            snapshot = None
+        realtime.publish_match(body["match_id"], snapshot)
     return result
 
 
