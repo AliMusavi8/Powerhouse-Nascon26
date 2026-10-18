@@ -11,7 +11,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import config, db, seed
 from .errors import ApiError
-from .routes import api, audit, day2, guest, rbac, web
+from .routes import api, audit, creator, day2, guest, rbac, web
 
 log = logging.getLogger("nascon")
 
@@ -132,6 +132,7 @@ app.include_router(day2.router)
 app.include_router(guest.router)
 app.include_router(guest.ws_router)
 app.include_router(web.router)
+app.include_router(creator.router)
 app.include_router(rbac.router)
 app.include_router(api.router)
 app.include_router(api.ws_router)
