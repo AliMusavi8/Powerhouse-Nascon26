@@ -32,7 +32,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import com.nascon.app.data.long
+import com.nascon.app.data.money
 import androidx.compose.ui.graphics.Color
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
@@ -97,11 +102,34 @@ private fun mediaUrl(base: String, url: String?): String? {
     return url?.replace("//localhost:", "//$host:")
 }
 
+/** Same frame as the app's Page: striped brand header with a hero slot, then the warm rounded sheet. */
+@Composable
+fun LivePage(title: String, onBack: () -> Unit, hero: @Composable () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primary)) {
+        Box {
+            Stripes(Modifier.matchParentSize())
+            Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 20.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    CircleButton(androidx.compose.material.icons.Icons.AutoMirrored.Filled.ArrowBack, "Back", onBack)
+                    Text(title, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
+                    BadgePill("Live", dot = true)
+                }
+                Box(Modifier.padding(top = 16.dp)) { hero() }
+            }
+        }
+        Column(
+            Modifier.fillMaxSize().clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+                .background(MaterialTheme.colorScheme.background)
+        ) { content() }
+    }
+}
+
 @Composable
 private fun LiveVideo(url: String?, label: String) {
     Box(
-        Modifier.fillMaxWidth().aspectRatio(16f / 9f).background(Color.Black, RoundedCornerShape(16.dp))
-            .semantics { contentDescription = label }.testTag("live-video")
+        Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(RoundedCornerShape(20.dp)).background(Color.Black)
+            .semantics { contentDescription = label }.testTag("live-video"),
+        contentAlignment = Alignment.Center
     ) {
         if (url != null) {
             AndroidView(factory = { ctx ->
@@ -111,6 +139,8 @@ private fun LiveVideo(url: String?, label: String) {
                     setVideoURI(Uri.parse(url))
                 }
             }, modifier = Modifier.fillMaxSize())
+        } else {
+            Text("Connecting to the stream…", color = Color.White.copy(alpha = 0.8f))
         }
     }
 }
@@ -141,6 +171,14 @@ private fun LiveSocket(path: String, onMessage: (JsonObject) -> Unit) {
     }
 }
 
+private fun statusText(s: String?) = when (s) {
+    "in_progress" -> "In progress"
+    "upcoming" -> "Starts soon"
+    "completed" -> "Full time"
+    null -> "Connecting…"
+    else -> s.replaceFirstChar { it.uppercase() }
+}
+
 @Composable
 private fun MatchLive(matchId: String, onClose: () -> Unit) {
     val g = graph()
@@ -164,44 +202,41 @@ private fun MatchLive(matchId: String, onClose: () -> Unit) {
         }
     }
 
-    Column(Modifier.fillMaxSize().testTag("match-live-screen").semantics { contentDescription = "Match live screen" }) {
-        Bar("Match Live", onBack = onClose)
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            val d = data
-            LiveVideo(mediaUrl(g.api.base(), d?.obj("playback")?.str("hls")), "Live match video")
-            Surface(shape = RoundedCornerShape(16.dp), tonalElevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
-                Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(d?.obj("home")?.str("name") ?: "Home", Modifier.weight(1f), fontWeight = FontWeight.Bold)
-                    Text(
-                        if (home != null && away != null) "$home - $away" else "–",
-                        fontSize = 32.sp, fontWeight = FontWeight.ExtraBold,
-                        modifier = Modifier.testTag("live-score").semantics { liveRegion = LiveRegionMode.Polite }
-                    )
-                    Text(d?.obj("away")?.str("name") ?: "Away", Modifier.weight(1f), fontWeight = FontWeight.Bold,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.End)
+    Box(Modifier.fillMaxSize().testTag("match-live-screen").semantics { contentDescription = "Match live screen" }) {
+        val d = data
+        LivePage("Match Live", onClose, hero = {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                TeamBlock(d?.obj("home")?.str("name") ?: "Home", Modifier.weight(1f), crest = 64, color = Color.White)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(if (home != null && away != null) "$home-$away" else "–", color = Color.White, fontSize = 44.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        modifier = Modifier.testTag("live-score").semantics { liveRegion = LiveRegionMode.Polite })
+                    Text(statusText(status), color = Color.White.copy(alpha = 0.85f), fontSize = 14.sp)
+                    d?.str("venue")?.let { Text(it, color = Color.White.copy(alpha = 0.7f), fontSize = 13.sp) }
                 }
+                TeamBlock(d?.obj("away")?.str("name") ?: "Away", Modifier.weight(1f), crest = 64, color = Color.White)
             }
-            Text(statusText(status), color = MaterialTheme.colorScheme.onSurfaceVariant)
-            d?.obj("pinned_product")?.let { p ->
-                Surface(shape = RoundedCornerShape(16.dp), tonalElevation = 1.dp, modifier = Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(16.dp)) {
-                        Text("Pinned by the club", style = MaterialTheme.typography.labelLarge)
-                        Text(p.str("name") ?: "", fontWeight = FontWeight.Bold)
+        }) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                LiveVideo(mediaUrl(g.api.base(), d?.obj("playback")?.str("hls")), "Live match video")
+                d?.obj("pinned_product")?.let { p ->
+                    val v = (p["variants"] as? kotlinx.serialization.json.JsonArray)?.firstOrNull() as? JsonObject
+                    Surface(shape = RoundedCornerShape(22.dp), color = MaterialTheme.colorScheme.surface,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, extra.line), modifier = Modifier.fillMaxWidth()) {
+                        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text("Pinned by the club", style = MaterialTheme.typography.labelMedium, color = extra.muted)
+                                Text(p.str("name") ?: "", fontWeight = FontWeight.Bold, maxLines = 1)
+                                v?.long("price_minor")?.let { Text(money(it), color = extra.muted) }
+                            }
+                        }
                     }
                 }
+                error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             }
-            error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            ChatPanel("chat-$matchId", Modifier.weight(1f))
         }
-        ChatPanel("chat-$matchId", Modifier.weight(1f))
     }
-}
-
-private fun statusText(s: String?) = when (s) {
-    "in_progress" -> "Live now"
-    "upcoming" -> "Starts soon"
-    "completed" -> "Full time"
-    null -> "Connecting…"
-    else -> s.replaceFirstChar { it.uppercase() }
 }
 
 @Composable
@@ -215,22 +250,37 @@ private fun CoStreamLive(sessionId: String, onClose: () -> Unit) {
     }
     LiveSocket("/ws/costream/$sessionId") { m -> if (m.str("type") == "costream_updated") data = m }
 
-    Column(Modifier.fillMaxSize().testTag("costream-screen").semantics { contentDescription = "Co-stream screen" }) {
-        Bar("Co-Stream", onBack = onClose)
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            val d = data
-            LiveVideo(mediaUrl(g.api.base(), d?.obj("playback")?.str("hls")
-                ?: "${g.api.base().replace(":8080", ":8888")}/costream/$sessionId/index.m3u8"), "Co-stream video")
-            val names = d?.obj("names")
-            val host = d?.str("active_host")
-            Text(
-                if (d?.str("status") == "terminated") "This co-stream has ended"
-                else "Host: ${names?.str(host ?: "") ?: host ?: "…"} · ${d?.int("participant_count") ?: 0} live · ${d?.str("layout") ?: ""}",
-                fontWeight = FontWeight.Bold
-            )
-            error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+    Box(Modifier.fillMaxSize().testTag("costream-screen").semantics { contentDescription = "Co-stream screen" }) {
+        val d = data
+        val names = d?.obj("names")
+        val host = d?.str("active_host")
+        val ended = d?.str("status") == "terminated"
+        LivePage("Co-Stream", onClose, hero = {
+            Column {
+                Text(if (ended) "This co-stream has ended" else (names?.str(host ?: "") ?: host ?: "…"),
+                    color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.Bold)
+                Text(if (ended) "Thanks for watching" else "Hosting · ${d?.int("participant_count") ?: 0} live · ${(d?.str("layout") ?: "").replace('_', ' ')}",
+                    color = Color.White.copy(alpha = 0.85f), fontSize = 14.sp)
+            }
+        }) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                LiveVideo(mediaUrl(g.api.base(), d?.obj("playback")?.str("hls")
+                    ?: "${g.api.base().replace(":8080", ":8888")}/costream/$sessionId/index.m3u8"), "Co-stream video")
+                val parts = (d?.get("active_participants") as? kotlinx.serialization.json.JsonArray)
+                    ?.mapNotNull { (it as? kotlinx.serialization.json.JsonPrimitive)?.content } ?: emptyList()
+                if (parts.isNotEmpty()) Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    parts.forEach { pid ->
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            ClubBadge(names?.str(pid) ?: pid, 44)
+                            Text((names?.str(pid) ?: pid).substringBefore(" "), fontSize = 12.sp,
+                                fontWeight = if (pid == host) FontWeight.Bold else FontWeight.Normal)
+                        }
+                    }
+                }
+                error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            }
+            ChatPanel("chat-$sessionId", Modifier.weight(1f))
         }
-        ChatPanel("chat-$sessionId", Modifier.weight(1f))
     }
 }
 
@@ -251,30 +301,45 @@ private fun ChatPanel(room: String, modifier: Modifier) {
         }
     }
     LaunchedEffect(room) {
-        try { g.api.get("/api/v1/guest/chat/$room", auth = "").arr("messages").forEach { add(it.jsonObject) } }
+        try { g.api.get("/api/v1/guest/chat/$room", auth = "").arr("messages").forEach { add(it) } }
         catch (e: ApiError) { /* history is optional */ }
     }
     LiveSocket("/ws/chat/$room") { m -> if (m.str("type") == "chat") add(m) }
     LaunchedEffect(messages.size) { if (messages.isNotEmpty()) listState.animateScrollToItem(messages.size - 1) }
 
-    Column(modifier.padding(horizontal = 16.dp).testTag("chat-panel")) {
-        Text("Live chat", style = MaterialTheme.typography.titleMedium)
-        LazyColumn(Modifier.weight(1f).fillMaxWidth(), state = listState) {
-            items(messages, key = { it.int("seq") ?: 0 }) { m ->
-                Text("${m.str("sender")}: ${m.str("text")}", Modifier.padding(vertical = 4.dp).testTag("chat-message"))
-            }
-        }
-        Row(Modifier.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(text, { text = it }, Modifier.weight(1f).heightIn(min = 48.dp), placeholder = { Text("Message") },
-                singleLine = true)
-            Button(onClick = {
-                val body = buildJsonObject { put("chat_room_id", room); put("text", text) }
-                scope.launch {
-                    try { add(g.api.post("/api/v1/chat", body)); text = ""; note = null }
-                    catch (e: ApiError) { note = if (e.status == 403) "Sign in to join the chat." else e.message }
+    Surface(
+        modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 12.dp).testTag("chat-panel"),
+        shape = RoundedCornerShape(22.dp), color = MaterialTheme.colorScheme.surface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, extra.line)
+    ) {
+        Column(Modifier.padding(14.dp)) {
+            Text("Live chat", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            LazyColumn(Modifier.weight(1f).fillMaxWidth().padding(vertical = 6.dp), state = listState,
+                verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                if (messages.isEmpty()) item { Text("No messages yet. Say hello!", color = extra.muted) }
+                items(messages, key = { it.int("seq") ?: 0 }) { m ->
+                    Surface(shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.background) {
+                        Text(buildAnnotated(m.str("sender") ?: "fan", m.str("text") ?: ""),
+                            Modifier.padding(horizontal = 12.dp, vertical = 8.dp).testTag("chat-message"))
+                    }
                 }
-            }, modifier = Modifier.padding(start = 8.dp).heightIn(min = 48.dp)) { Text("Send") }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(text, { text = it }, Modifier.weight(1f).heightIn(min = 48.dp),
+                    placeholder = { Text("Say something") }, singleLine = true, shape = RoundedCornerShape(24.dp))
+                Button(onClick = {
+                    val body = buildJsonObject { put("chat_room_id", room); put("text", text) }
+                    scope.launch {
+                        try { add(g.api.post("/api/v1/chat", body)); text = ""; note = null }
+                        catch (e: ApiError) { note = if (e.status == 403 || e.status == 401) "Sign in to join the chat." else e.message }
+                    }
+                }, modifier = Modifier.padding(start = 8.dp).heightIn(min = 48.dp)) { Text("Send") }
+            }
+            note?.let { Text(it, color = MaterialTheme.colorScheme.error, fontSize = 13.sp) }
         }
-        note?.let { Text(it, color = MaterialTheme.colorScheme.error) }
     }
+}
+
+private fun buildAnnotated(sender: String, text: String) = androidx.compose.ui.text.buildAnnotatedString {
+    pushStyle(androidx.compose.ui.text.SpanStyle(fontWeight = FontWeight.Bold)); append("$sender  "); pop(); append(text)
 }

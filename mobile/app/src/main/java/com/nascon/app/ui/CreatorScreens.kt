@@ -90,30 +90,52 @@ fun AthleteLive(playerId: String, onClose: () -> Unit) {
     LaunchedEffect(playerId) {
         try { p = g.api.get("/api/v1/players/$playerId/profile") } catch (e: ApiError) { note = e.message }
     }
-    Column(Modifier.fillMaxSize().testTag("athlete-screen")) {
-        Bar("Athlete", onBack = onClose)
-        Column(Modifier.padding(16.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            val d = p
-            Text(d?.str("name") ?: playerId, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            val club = (d?.get("affiliations") as? kotlinx.serialization.json.JsonArray)?.firstOrNull() as? JsonObject
-            club?.str("name")?.let { Text("Plays for $it") }
-            d?.obj("career")?.let { c ->
-                Text("Career: ${c.int("played")} played · ${c.int("won")} won · ${c.int("drawn")} drawn · ${c.int("lost")} lost")
-            }
-            Text("${d?.int("follower_count") ?: 0} followers", fontWeight = FontWeight.Bold)
-            val following = d?.bool("following") == true
-            Button(onClick = {
-                scope.launch {
-                    try {
-                        val r = if (following) g.api.delete("/api/v1/players/$playerId/follow")
-                        else g.api.post("/api/v1/players/$playerId/follow", buildJsonObject { })
-                        p = d?.let { JsonObject(it + mapOf("following" to kotlinx.serialization.json.JsonPrimitive(r.bool("following")),
-                            "follower_count" to kotlinx.serialization.json.JsonPrimitive(r.int("follower_count")))) }
-                        note = null
-                    } catch (e: ApiError) { note = if (e.status == 401 || e.status == 403) "Sign in to follow athletes." else e.message }
+    val d = p
+    val club = (d?.get("affiliations") as? kotlinx.serialization.json.JsonArray)?.firstOrNull() as? JsonObject
+    androidx.compose.foundation.layout.Box(Modifier.fillMaxSize().testTag("athlete-screen")) {
+        LivePage("Athlete", onClose, hero = {
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                ClubBadge(club?.str("name") ?: (d?.str("name") ?: playerId), 64)
+                Column {
+                    Text(d?.str("name") ?: playerId, color = androidx.compose.ui.graphics.Color.White,
+                        style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    club?.str("name")?.let { Text(it, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.85f)) }
                 }
-            }, modifier = Modifier.heightIn(min = 48.dp).testTag("follow-button")) { Text(if (following) "Following" else "Follow") }
-            note?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            }
+        }) {
+            Column(Modifier.padding(16.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                val c = d?.obj("career")
+                Surface(shape = RoundedCornerShape(22.dp), color = MaterialTheme.colorScheme.surface,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, extra.line), modifier = Modifier.fillMaxWidth()) {
+                    Row(Modifier.padding(vertical = 16.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+                        listOf("Played" to c?.int("played"), "Won" to c?.int("won"), "Drawn" to c?.int("drawn"), "Lost" to c?.int("lost"))
+                            .forEach { (label, v) ->
+                                Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+                                    Text("${v ?: 0}", fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.headlineSmall)
+                                    Text(label, color = extra.muted, style = MaterialTheme.typography.labelMedium)
+                                }
+                            }
+                    }
+                }
+                val following = d?.bool("following") == true
+                Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    Text("${d?.int("follower_count") ?: 0} followers", fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                    Button(onClick = {
+                        scope.launch {
+                            try {
+                                val r = if (following) g.api.delete("/api/v1/players/$playerId/follow")
+                                else g.api.post("/api/v1/players/$playerId/follow", buildJsonObject { })
+                                p = d?.let { JsonObject(it + mapOf("following" to kotlinx.serialization.json.JsonPrimitive(r.bool("following")),
+                                    "follower_count" to kotlinx.serialization.json.JsonPrimitive(r.int("follower_count")))) }
+                                note = null
+                            } catch (e: ApiError) { note = if (e.status == 401 || e.status == 403) "Sign in to follow athletes." else e.message }
+                        }
+                    }, modifier = Modifier.heightIn(min = 48.dp).testTag("follow-button")) { Text(if (following) "Following" else "Follow") }
+                }
+                val upcoming = (d?.get("upcoming_fixtures") as? kotlinx.serialization.json.JsonArray)?.size ?: 0
+                if (upcoming > 0) Text("$upcoming upcoming fixtures", color = extra.muted)
+                note?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            }
         }
     }
 }
@@ -134,8 +156,7 @@ fun BroadcastScreen(onBack: () -> Unit) {
     }
     LaunchedEffect(Unit) { act("generate") }
 
-    Column(Modifier.fillMaxSize().testTag("broadcast-screen")) {
-        Bar("Go live", onBack = onBack)
+    androidx.compose.foundation.layout.Box(Modifier.fillMaxSize().testTag("broadcast-screen")) { Page("Go live", back = true) {
         Column(Modifier.padding(16.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             val k = key
             val active = k?.str("status") == "active"
@@ -167,5 +188,5 @@ fun BroadcastScreen(onBack: () -> Unit) {
             }
             note?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         }
-    }
+    } }
 }
