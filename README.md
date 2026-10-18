@@ -140,6 +140,62 @@ The app is sport-agnostic: no sport or event names appear in the code. Event but
 - The JWT is encrypted with an AES-256-GCM key held in the Android Keystore (`mobile/app/src/main/java/com/nascon/app/data/Security.kt`).
 - Cleartext HTTP is allowed through `res/xml/network_security_config.xml` because the backend runs on plain HTTP on the LAN.
 
+## Day 2 (Part II): streaming, dynamic QR, guest web player, grid QA
+
+```bash
+DAY1_SALT=<s1> DAY2_SALT=<s2> docker compose up -d --build
+curl localhost:8080/health                  # {"status":"ok"}
+curl localhost:4444/status                  # Selenium Grid: ready, 3 nodes
+open http://localhost:8080/q/m1-live        # Guest Web Player for match-m1 (no app, no account)
+```
+
+| Service | Port(s) | Purpose |
+|---|---|---|
+| `api` | 8080 | REST + `/audit/v1/*` Part II contract, `/web/*` guest player, `/q/*` short links, `/metrics`, WebSocket/SSE |
+| `mediamtx` | 1935 RTMP, 8888 HLS, 8889 WebRTC (WHIP/WHEP), 8189/udp | Self-hosted media server. Publishing is authorised by the API (active stream key only) |
+| `minio` | internal 9000 | VOD recordings (bucket `vod`) |
+| `selenium-hub` + `node-chrome-1/2` + `node-firefox` | 4444 | Selenium Grid 4.25, 1 GB shm, no VNC |
+
+`DAY2_SALT` is read only from the environment and signs every Part II record (`crypto.sign_day2`).
+
+### Part II contract (`/audit/v1/*`)
+
+| Method & path | Notes |
+|---|---|
+| `POST /audit/v1/stream/key` | generate (201) / rotate / revoke. Revoking kicks the live publisher through the MediaMTX API (measured 0.23 s) |
+| `POST /audit/v1/costream/session` | Validation in spec order, host handoff, idempotent replay (200), live re-post keeps `chat_room_id` |
+| `GET /audit/v1/qr/{id}[?inspect=true]`, `/export.{svg,png,pdf}`, `GET /q/{code}` | Stable short URL, target route computed from live state, scan telemetry without IP/UA |
+| `POST /audit/v1/guest/cart-merge` | 403 write-block check, atomic merge, network-replay safe |
+| `POST /audit/v1/moderation/test` | Leetspeak masking, flood drop, deduplicated kick/mute under races, DLQ depth |
+| `GET /metrics`, `DELETE /audit/v1/privacy/user/{id}` | Prometheus text 0.0.4; anonymisation + token wipe |
+
+Match notice states for dynamic QR: append `match_postponed`, `match_cancelled`, `match_abandoned`, or
+`match_status` with `{"status": "..."}` through `POST /audit/v1/events`.
+
+### Guest access
+
+- Any write with `Authorization: Bearer guest_*` returns 403 `GUEST_WRITE_FORBIDDEN` (middleware, before validation).
+- Guest reads: `/api/v1/guest/{session,matches/{id},costream/{id},chat/{room}}`, live score `GET /api/v1/matches/{id}/stream` (SSE) or `WS /ws/matches/{id}` (token optional).
+
+### QA harness
+
+```bash
+pytest -n 3 tests/selenium/ --junitxml=tests/reports/selenium-report.xml   # Grid (browsers reach the API via host.docker.internal)
+pytest tests/appium --junitxml=tests/reports/appium-report.xml              # needs `appium` on :4723 + a device on adb
+k6 run --summary-export=tests/reports/k6-summary.json tests/k6_load.js
+./run_tests.sh                                                              # unit tests -> COVERAGE.json + COVERAGE_DAY2.json
+```
+
+`.github/workflows/autograde.yml` runs all of it on every push to `main`.
+
+### Mobile deep links
+
+`nascon://entity/{id}` and `nascon://stream/{cs-session-id}` open the Match Live / Co-Stream screen directly, signed in or not:
+
+```bash
+adb shell am start -W -a android.intent.action.VIEW -d "nascon://entity/match-m1"
+```
+
 ## Repository map
 
 | Path | Contents |

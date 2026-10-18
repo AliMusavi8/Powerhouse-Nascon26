@@ -88,3 +88,27 @@
 **Consequences:**
 - The server stays authoritative.
 - The app shows a result for every action in plain language and clears the queue.
+
+## ADR-009: MediaMTX as the media server, with the API as the publish authority
+**Status:** Accepted
+**Decision:** One MediaMTX container serves RTMP, HLS and WebRTC (WHIP/WHEP). Its `authMethod: http` hook asks the API
+whether a stream key is active; revoking a key also kicks live sessions through the MediaMTX control API.
+**Consequences:** Revocation cuts ingest in well under 2 s. No key logic lives in the media server.
+
+## ADR-010: On-demand compositor owned by the media server
+**Status:** Accepted
+**Decision:** `costream/<id>` and `matchfeed/<id>` are `runOnDemand` paths. The ffmpeg compositor reads the layout
+from the API; host handoff kicks the path so MediaMTX restarts it with the new layout, and stops it when no one watches.
+**Consequences:** The composite URL never changes across handoffs and no orphaned ffmpeg process can exist.
+
+## ADR-011: Guest boundary as middleware
+**Status:** Accepted
+**Decision:** A pure ASGI middleware rejects every write carrying a `guest_*` bearer before routing (403
+`GUEST_WRITE_FORBIDDEN`). The cart-merge probe calls the same rule.
+**Consequences:** New write routes are protected by default; UI hiding is never the control.
+
+## ADR-012: Generation-checked caches for the load-tested reads
+**Status:** Accepted
+**Decision:** QR `inspect` views and the DLQ status are cached in process. Every write that can change them bumps a
+generation counter; a reader only stores its result if no write happened during the read.
+**Consequences:** k6 (500 + 50 VUs) runs at p95 117 ms with 0% errors while dynamic QR routes still change instantly.
