@@ -11,7 +11,7 @@ jobs:
     timeout-minutes: 30
     env:
       # Real salts come from repository secrets; the fallbacks are public test values (Appendix A).
-      DAY1_SALT: ${{ secrets.DAY1_SALT || 'ci-day1-salt' }}
+      DAY1_SALT: demo-salt  # Day 1 integration tests verify signatures with this public test salt
       DAY2_SALT: ${{ secrets.DAY2_SALT || 'T01D27ad7ffff12e' }}
       API_BASE: http://localhost:8080
       GRID_URL: http://localhost:4444
