@@ -62,4 +62,5 @@ def erase_user(user_id: str) -> dict:
         cur.execute("UPDATE chat_messages SET sender = %s WHERE sender = ANY(%s)", (anon, ids))
         cur.execute("UPDATE moderation_state SET user_id = %s WHERE user_id = ANY(%s) "
                     "AND NOT EXISTS (SELECT 1 FROM moderation_state m2 WHERE m2.user_id = %s)", (anon, ids, anon))
+    qr.invalidate()
     return {"user_id": user_id, "status": "anonymized", "pii_retained": False, "tokens_wiped": True}

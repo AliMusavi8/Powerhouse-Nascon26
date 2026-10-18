@@ -57,6 +57,8 @@ def append_event(body: dict, cur=None) -> tuple[int, dict]:
     else:
         result = _append(cur, body)
     if result[0] == 201:
+        from . import qr
+        qr.invalidate()
         try:
             snapshot = score(body["match_id"])
         except Exception:

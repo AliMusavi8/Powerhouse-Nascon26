@@ -66,11 +66,34 @@ def _view(cur, row: dict, scan_count: int) -> dict:
     return rules.view(entity_id, kind, status, short_url, route, scan_count, config.PUBLIC_BASE, signature)
 
 
+# Inspect reads (the k6 hot path) are served from memory. Any write that can change a view bumps the
+# generation; a reader only stores its result if no write happened while it was reading.
+_views: dict[str, dict] = {}
+_gen = 0
+
+
+def invalidate() -> None:
+    global _gen
+    _gen += 1
+    _views.clear()
+
+
+def cached(entity_id: str) -> dict | None:
+    return _views.get(entity_id)
+
+
 def resolve(entity_id: str, inspect: bool, user_agent: str | None = None) -> dict:
+    gen = _gen
     with db.tx() as cur:
         row = _mapping(cur, entity_id)
         count = row["scan_count"] if inspect else _record_scan(cur, entity_id, user_agent)
-        return _view(cur, row, count)
+        view = _view(cur, row, count)
+    if inspect:
+        if gen == _gen:
+            _views[entity_id] = view
+    else:
+        invalidate()
+    return view
 
 
 def scan_short_code(code: str, user_agent: str | None) -> dict:
@@ -80,7 +103,9 @@ def scan_short_code(code: str, user_agent: str | None) -> dict:
         row = cur.fetchone()
         if row is None:
             raise qr_not_found(code)
-        return _view(cur, row, _record_scan(cur, row["entity_id"], user_agent))
+        view = _view(cur, row, _record_scan(cur, row["entity_id"], user_agent))
+    invalidate()
+    return view
 
 
 def export(entity_id: str, fmt: str) -> tuple[bytes, str]:

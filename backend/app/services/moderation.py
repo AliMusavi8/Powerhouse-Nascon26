@@ -38,15 +38,45 @@ def dlq_status(cur, limit: int = 100) -> dict:
     return {"queue_depth": depth, "undelivered_events": events}
 
 
+_status_cache: dict = {}
+_gen = 0
+
+
+def invalidate() -> None:
+    global _gen
+    _gen += 1
+    _status_cache.clear()
+
+
+def fast_probe(body: dict) -> dict | None:
+    """Answer without the database when the batch changes nothing and the DLQ status is cached."""
+    req = rules.validate_request(body)
+    if req["simulate_failed_notifications"] or "s" not in _status_cache:
+        return None
+    result = rules.moderate(req["incoming_messages"])
+    if result["kicked_users"] or result["muted_users"]:
+        return None
+    return _respond(req["chat_room_id"], result, _status_cache["s"])
+
+
 def probe(body: dict) -> dict:
     req = rules.validate_request(body)
     room = req["chat_room_id"]
     result = rules.moderate(req["incoming_messages"])
+    gen = _gen
     with db.tx() as cur:
         _persist_actions(cur, room, result["kicked_users"], result["muted_users"])
         if req["simulate_failed_notifications"] > 0:
             enqueue_failures(cur, req["simulate_failed_notifications"], room)
         status = dlq_status(cur)
+    if req["simulate_failed_notifications"] > 0:
+        invalidate()
+    elif gen == _gen:
+        _status_cache["s"] = status
+    return _respond(room, result, status)
+
+
+def _respond(room: str, result: dict, status: dict) -> dict:
     signature = crypto.sign_day2(room, rules.sig_payload(room, result["flagged_count"], result["kicked_users"],
                                                          status["queue_depth"]))
     return {"chat_room_id": room, "filtered_messages": result["filtered_messages"],

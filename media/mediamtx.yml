@@ -1,0 +1,65 @@
+# MediaMTX (self-hosted media server): RTMP ingest :1935, HLS :8888, WebRTC WHIP/WHEP :8889.
+# Publishing is authorised by the API (active stream key only); reading is open.
+logLevel: info
+
+api: yes
+apiAddress: :9997
+
+authMethod: http
+authHTTPAddress: http://api:8080/internal/media/auth
+authHTTPExclude:
+  - action: api
+  - action: metrics
+  - action: pprof
+
+rtmp: yes
+rtmpAddress: :1935
+
+rtsp: yes
+rtspAddress: :8554
+protocols: [tcp]
+
+hls: yes
+hlsAddress: :8888
+hlsAllowOrigin: '*'
+hlsVariant: mpegts
+hlsSegmentCount: 6
+hlsSegmentDuration: 1s
+hlsAlwaysRemux: no
+
+webrtc: yes
+webrtcAddress: :8889
+webrtcAllowOrigin: '*'
+webrtcLocalUDPAddress: :8189
+webrtcAdditionalHosts: [127.0.0.1]
+
+srt: no
+
+pathDefaults:
+  record: no
+  recordPath: /recordings/%path/%Y-%m-%d_%H-%M-%S-%f
+  recordFormat: fmp4
+  recordSegmentDuration: 10s
+
+paths:
+  # Creator ingest (OBS / FFmpeg / app). Recorded for VOD; the API is told when a segment or stream ends.
+  "~^live/(.+)$":
+    record: yes
+    runOnRecordSegmentComplete: wget -q -O- --post-data="path=$MTX_PATH&segment=$MTX_SEGMENT_PATH" http://api:8080/internal/media/recorded
+    runOnNotReady: wget -q -O- --post-data="path=$MTX_PATH&ended=1" http://api:8080/internal/media/recorded
+
+  # 4-way co-stream composite: started when the first viewer asks for it, stopped when the last one leaves.
+  "~^costream/(.+)$":
+    runOnDemand: sh /media/composite.sh $G1 $MTX_PATH
+    runOnDemandRestart: yes
+    runOnDemandStartTimeout: 15s
+    runOnDemandCloseAfter: 10s
+
+  # Match feed for the guest player: the bound broadcaster if any, otherwise a branded slate with the score.
+  "~^matchfeed/(.+)$":
+    runOnDemand: sh /media/matchfeed.sh $G1 $MTX_PATH
+    runOnDemandRestart: yes
+    runOnDemandStartTimeout: 15s
+    runOnDemandCloseAfter: 10s
+
+  all_others:

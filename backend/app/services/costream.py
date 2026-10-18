@@ -46,6 +46,8 @@ def _code(entity_id: str) -> str:
 
 
 def _changed(sid: str, response: dict) -> None:
+    from . import qr
+    qr.invalidate()
     realtime.publish("costream:" + sid, dict(response, type="costream_updated"))
     # Restart the compositor so the composite reflects the new host / layout (MediaMTX re-runs it on demand).
     threading.Thread(target=media.kick_path, args=("costream/" + sid,), daemon=True).start()

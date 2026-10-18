@@ -37,6 +37,10 @@ async def qr_export(entity_id: str, fmt: str):
 async def qr_resolve(request: Request, entity_id: str, inspect: str | None = None):
     from ..services import qr
     peek = (inspect or "").lower() in ("true", "1", "yes")
+    if peek:
+        hit = qr.cached(entity_id)
+        if hit is not None:
+            return respond(200, hit)
     return respond(200, await run_in_threadpool(qr.resolve, entity_id, peek, request.headers.get("user-agent")))
 
 
@@ -61,6 +65,9 @@ async def guest_cart_merge(request: Request):
 async def moderation_test(request: Request):
     from ..services import moderation
     body = await read_object(request)
+    fast = moderation.fast_probe(body)
+    if fast is not None:
+        return respond(200, fast)
     return respond(200, await run_in_threadpool(moderation.probe, body))
 
 
@@ -91,6 +98,15 @@ async def media_auth(request: Request):
         return Response(status_code=200)
     return JSONResponse(status_code=401, content={"error": {"code": "KEY_REVOKED",
                                                             "message": "Stream key is not active.", "details": {}}})
+
+
+@router.post("/internal/media/recorded")
+async def media_recorded(request: Request):
+    from urllib.parse import parse_qs
+    from ..services import vod
+    form = {k: v[0] for k, v in parse_qs((await request.body()).decode("utf-8", "replace")).items()}
+    await run_in_threadpool(vod.recorded, form.get("path", ""), form.get("segment"))
+    return Response(status_code=204)
 
 
 @router.get("/internal/costream/{session_id}/layout")

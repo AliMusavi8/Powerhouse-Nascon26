@@ -61,44 +61,50 @@ async def _unhandled(_: Request, exc: Exception):
         "code": "INTERNAL_ERROR", "message": "Unexpected server error.", "details": {}}})
 
 
-# ---------------------------------------------------------------- body size limit
-
-@app.middleware("http")
-async def _body_limit(request: Request, call_next):
-    length = request.headers.get("content-length")
-    if length and length.isdigit() and int(length) > config.MAX_BODY_BYTES:
-        return JSONResponse(status_code=413, content={"error": {
-            "code": "PAYLOAD_TOO_LARGE", "message": "Request body exceeds 1 MB.", "details": {}}})
-    return await call_next(request)
-
-
-# ---------------------------------------------------------------- rate limit (/api/v1/* only)
+# ---------------------------------------------------------------- body limit + rate limit (pure ASGI, cheap)
 
 _hits: dict[str, deque] = {}
 _hits_lock = threading.Lock()
 
 
-def _client_ip(request: Request) -> str:
-    return request.client.host if request.client else "unknown"
+def _rate_limited(path: str, client) -> int | None:
+    """Seconds to wait if this /api/v1/* request is over the per-IP limit, else None."""
+    if not path.startswith("/api/v1/") or path.startswith("/api/v1/guest/") or path.endswith("/stream"):
+        return None
+    ip = client[0] if client else "unknown"
+    now = time.monotonic()
+    window = config.RATE_LIMIT_WINDOW_SECONDS
+    with _hits_lock:
+        q = _hits.setdefault(ip, deque())
+        while q and now - q[0] >= window:
+            q.popleft()
+        if len(q) >= config.RATE_LIMIT_REQUESTS:
+            return max(1, int(window - (now - q[0])) + 1)
+        q.append(now)
+    return None
 
 
-@app.middleware("http")
-async def _rate_limit(request: Request, call_next):
-    path = request.url.path
-    if path.startswith("/api/v1/") and not path.startswith("/api/v1/guest/") and not path.endswith("/stream"):
-        now = time.monotonic()
-        window = config.RATE_LIMIT_WINDOW_SECONDS
-        with _hits_lock:
-            q = _hits.setdefault(_client_ip(request), deque())
-            while q and now - q[0] >= window:
-                q.popleft()
-            if len(q) >= config.RATE_LIMIT_REQUESTS:
-                retry = max(1, int(window - (now - q[0])) + 1)
-                return JSONResponse(status_code=429, headers={"Retry-After": str(retry)}, content={"error": {
+class LimitsMiddleware:
+    """1 MB body limit (413) on every route, and 100 requests / 10 s per IP on /api/v1/* (429)."""
+
+    def __init__(self, app):
+        self.inner = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http":
+            length = next((v for k, v in scope["headers"] if k == b"content-length"), b"")
+            if length.isdigit() and int(length) > config.MAX_BODY_BYTES:
+                await JSONResponse(status_code=413, content={"error": {
+                    "code": "PAYLOAD_TOO_LARGE", "message": "Request body exceeds 1 MB.", "details": {}}})(
+                    scope, receive, send)
+                return
+            retry = _rate_limited(scope["path"], scope.get("client"))
+            if retry is not None:
+                await JSONResponse(status_code=429, headers={"Retry-After": str(retry)}, content={"error": {
                     "code": "RATE_LIMITED", "message": "Too many requests. Please slow down.",
-                    "details": {"retry_after_seconds": retry}}})
-            q.append(now)
-    return await call_next(request)
+                    "details": {"retry_after_seconds": retry}}})(scope, receive, send)
+                return
+        await self.inner(scope, receive, send)
 
 
 class GuestWriteGuard:
@@ -119,6 +125,7 @@ class GuestWriteGuard:
 
 
 app.add_middleware(GuestWriteGuard)
+app.add_middleware(LimitsMiddleware)
 
 app.include_router(audit.router)
 app.include_router(day2.router)

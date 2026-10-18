@@ -70,6 +70,9 @@ def reset(seed: int = 42, stock: dict | None = None) -> dict:
         _seed_day2(cur)
         cur.execute("INSERT INTO meta (key, value) VALUES ('seed', %s)", (J(seed),))
         cur.execute("INSERT INTO meta (key, value) VALUES ('seeded', %s)", (J(True),))
+    from .services import moderation, qr
+    qr.invalidate()
+    moderation.invalidate()
     return {
         "status": "reset_complete",
         "seed": seed,

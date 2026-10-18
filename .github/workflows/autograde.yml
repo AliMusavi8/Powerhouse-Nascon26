@@ -1,0 +1,80 @@
+name: autograde
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  grade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # Real salts come from repository secrets; the fallbacks are public test values (Appendix A).
+      DAY1_SALT: ${{ secrets.DAY1_SALT || 'ci-day1-salt' }}
+      DAY2_SALT: ${{ secrets.DAY2_SALT || 'T01D27ad7ffff12e' }}
+      API_BASE: http://localhost:8080
+      GRID_URL: http://localhost:4444
+      WEB_BASE: http://host.docker.internal:8080
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Phase I ancestry
+        run: git merge-base --is-ancestor 596c2bc HEAD
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Pull images
+        run: docker compose pull --quiet --ignore-buildable
+
+      - name: Start stack (must be healthy within 120 s)
+        run: |
+          start=$(date +%s)
+          docker compose up -d --build
+          for i in $(seq 1 120); do curl -sf localhost:8080/health && break; sleep 1; done
+          curl -sf localhost:8080/health
+          echo "healthy after $(( $(date +%s) - start ))s"
+
+      - name: Selenium Grid has 3 ready nodes
+        run: |
+          for i in $(seq 1 90); do
+            curl -s localhost:4444/status | python -c "import sys,json;v=json.load(sys.stdin)['value'];sys.exit(0 if v['ready'] and len(v['nodes'])>=3 else 1)" && break
+            sleep 2
+          done
+          curl -s localhost:4444/status | python -c "import sys,json;v=json.load(sys.stdin)['value'];print('ready',v['ready'],'nodes',len(v['nodes']));sys.exit(0 if v['ready'] and len(v['nodes'])>=3 else 1)"
+
+      - name: Install test dependencies
+        run: pip install -q "segno==1.6.1" "fastapi==0.115.0" "psycopg[binary]==3.2.3" "psycopg-pool==3.2.3" "redis==5.0.8" "PyJWT==2.9.0" "fpdf2==2.8.1" pytest pytest-cov pytest-xdist pypdf requests websockets "selenium==4.25.0"
+
+      - name: Unit tests + coverage (Day 1 and Day 2)
+        run: DAY1_SALT=demo-salt python tests/coverage_report.py
+
+      - name: Backend contract probes (Phase I regression + Phase II)
+        run: DAY1_SALT=$DAY1_SALT python -m pytest tests/integration -q --junitxml=tests/reports/contract-report.xml
+
+      - name: Selenium Grid suite
+        run: |
+          curl -s -XPOST localhost:8080/audit/v1/reset > /dev/null
+          python -m pytest -n 3 tests/selenium/ --junitxml=tests/reports/selenium-report.xml
+
+      - uses: grafana/setup-k6-action@v1
+
+      - name: k6 load (500 guest viewers + 50 chat posters)
+        run: |
+          curl -s -XPOST localhost:8080/audit/v1/reset > /dev/null
+          k6 run --summary-export=tests/reports/k6-summary.json tests/k6_load.js
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: tests/reports/
+
+      - name: Stack logs on failure
+        if: failure()
+        run: docker compose logs --tail 200 api mediamtx

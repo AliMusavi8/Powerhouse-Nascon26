@@ -6,3 +6,4 @@ redis==5.0.8
 PyJWT==2.9.0
 fpdf2==2.8.1
 segno==1.6.1
+minio==7.2.9

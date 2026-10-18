@@ -59,27 +59,27 @@ Verification gate:
 ## Phase 4: Media server + full compose stack [PLAN §5, §7.1]
 
 Build:
-- [ ] MediaMTX (1935 / 8888 / 8889), auth hook, revoke → kick, costream compositor, matchfeed slate
-- [ ] MinIO + VOD upload
-- [ ] Selenium hub + 3 nodes exactly per spec
+- [x] MediaMTX (1935 / 8888 / 8889), auth hook, revoke → kick, costream compositor, matchfeed slate
+- [x] MinIO + VOD upload
+- [x] Selenium hub + 3 nodes exactly per spec
 
 Verification gate:
-- [ ] `docker compose down -v && DAY1_SALT=x DAY2_SALT=y docker compose up -d --build` → `/health` 200 in under 120 s
-- [ ] `curl localhost:4444/status` → `ready: true`, 3 nodes
-- [ ] `ffmpeg -re ... -f flv rtmp://localhost:1935/live/<active key>` publishes. `curl localhost:8888/live/<key>/index.m3u8` → 200
-- [ ] Revoke the key → publisher cut within 2 s. Republish with the revoked key → rejected
-- [ ] `curl localhost:8888/costream/cs-session-101/index.m3u8` → 200
+- [x] `docker compose down -v && DAY1_SALT=x DAY2_SALT=y docker compose up -d --build` → `/health` 200 in under 120 s
+- [x] `curl localhost:4444/status` → `ready: true`, 3 nodes
+- [x] `ffmpeg -re ... -f flv rtmp://localhost:1935/live/<active key>` publishes. `curl localhost:8888/live/<key>/index.m3u8` → 200
+- [x] Revoke the key → publisher cut within 2 s. Republish with the revoked key → rejected
+- [x] `curl localhost:8888/costream/cs-session-101/index.m3u8` → 200
 
 ## Phase 5: QA harness (Selenium, k6, CI) [PLAN §7.2-7.6]
 
 Build:
-- [ ] `tests/selenium/test_guest_grid.py` (3 required tests + a11y checks)
-- [ ] `tests/k6_load.js` (verbatim spec script)
-- [ ] `.github/workflows/autograde.yml`
+- [x] `tests/selenium/test_guest_grid.py` (3 required tests + a11y checks)
+- [x] `tests/k6_load.js` (verbatim spec script)
+- [x] `.github/workflows/autograde.yml`
 
 Verification gate:
-- [ ] `pytest -n 3 tests/selenium/ --junitxml=tests/reports/selenium-report.xml` → all pass on the Grid
-- [ ] `k6 run --summary-export=tests/reports/k6-summary.json tests/k6_load.js` → 0% failed, p95 < 800 ms
+- [x] `pytest -n 3 tests/selenium/ --junitxml=tests/reports/selenium-report.xml` → all pass on the Grid
+- [x] `k6 run --summary-export=tests/reports/k6-summary.json tests/k6_load.js` → 0% failed, p95 < 800 ms
 - [ ] CI run on GitHub green (or failures understood) → **commit + push (W3)**
 
 ## Phase 6: Mobile + Appium [PLAN §8, §7.4]
