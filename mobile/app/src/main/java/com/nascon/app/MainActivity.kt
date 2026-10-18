@@ -25,14 +25,16 @@ import com.nascon.app.ui.LoginScreen
 import com.nascon.app.ui.MainScreen
 
 class MainActivity : ComponentActivity() {
-    private var deepLink by mutableStateOf<DeepLink?>(null)
+    private val g get() = (application as App).graph
+    private var deepLink: DeepLink?
+        get() = g.link.value
+        set(v) { g.link.value = v }
 
     @OptIn(ExperimentalComposeUiApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge(statusBarStyle = androidx.activity.SystemBarStyle.dark(android.graphics.Color.TRANSPARENT))
         deepLink = DeepLink.parse(intent?.data)
-        val g = (application as App).graph
         setContent {
             val session by g.session.state.collectAsStateWithLifecycle()
             // A deep link opens its screen straight away (spec 6.3: foreground within 2 s, no login wall).

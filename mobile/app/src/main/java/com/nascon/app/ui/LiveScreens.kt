@@ -81,8 +81,15 @@ data class DeepLink(val kind: String, val id: String) {
  */
 @Composable
 fun DeepLinkScreen(link: DeepLink, onClose: () -> Unit) {
-    if (link.isCostream) CoStreamLive(link.id, onClose) else MatchLive(link.id, onClose)
+    when {
+        link.isCostream -> CoStreamLive(link.id, onClose)
+        link.id.startsWith("player-") -> AthleteLive(link.id, onClose)
+        else -> MatchLive(link.id, onClose)
+    }
 }
+
+@Composable
+fun LivePreview(url: String?) = LiveVideo(url, "Live preview of your stream")
 
 private fun mediaUrl(base: String, url: String?): String? {
     // Media URLs are issued for localhost; point them at the host the app talks to (emulator, USB or LAN).

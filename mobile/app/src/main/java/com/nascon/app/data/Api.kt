@@ -37,6 +37,8 @@ class Api(private val settings: Settings, private val token: () -> String?) {
     suspend fun post(path: String, body: JsonElement, auth: String? = null): JsonObject =
         call(Request.Builder().url(base() + path).post(body.toString().toRequestBody(JSON_TYPE)), auth)
 
+    suspend fun delete(path: String): JsonObject = call(Request.Builder().url(base() + path).delete(), null)
+
     suspend fun bytes(path: String): ByteArray = withContext(Dispatchers.IO) {
         val b = Request.Builder().url(base() + path).get()
         token()?.let { b.header("Authorization", "Bearer $it") }

@@ -26,6 +26,7 @@ class Graph(context: Context) {
     val sync = SyncManager(context, api, db, session, settings)
     val network = NetworkMonitor(context) { sync.schedule() }.also { sync.network = it }
     val cart = mutableStateListOf<CartLine>()
+    val link = androidx.compose.runtime.mutableStateOf<com.nascon.app.ui.DeepLink?>(null)
 }
 
 class App : Application() {

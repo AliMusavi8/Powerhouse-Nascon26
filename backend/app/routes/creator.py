@@ -177,6 +177,8 @@ def _invite(sid: str, actor: str, role: str, invitee) -> dict:
     token = "inv_" + crypto.sign_day2(sid, payload)[:32]
     from ..services import realtime
     realtime.publish("costream:" + sid, {"type": "costream_invite", "session_id": sid, "invitee": invitee})
+    from ..services import notify
+    notify.dispatch("costream_invite", "player:" + invitee, {"session_id": sid, "deep_link": f"nascon://stream/{sid}"})
     return {"session_id": sid, "invitee": invitee, "invite_token": token, "deep_link": f"nascon://stream/{sid}"}
 
 

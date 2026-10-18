@@ -64,6 +64,10 @@ def append_event(body: dict, cur=None) -> tuple[int, dict]:
         except Exception:
             snapshot = None
         realtime.publish_match(body["match_id"], snapshot)
+        from . import notify
+        notify.dispatch("score_update", "match:" + body["match_id"],
+                        {"match_id": body["match_id"], "event_id": body["event_id"], "type": body["type"]},
+                        simulate_dlq=body.get("simulate_dlq") is True, wait=body.get("simulate_dlq") is True)
     return result
 
 

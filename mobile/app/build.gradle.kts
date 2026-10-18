@@ -78,5 +78,6 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.okhttp)
+    implementation(libs.zxing.embedded)
     implementation(libs.androidx.datastore.preferences)
 }

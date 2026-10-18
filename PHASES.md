@@ -80,7 +80,7 @@ Build:
 Verification gate:
 - [x] `pytest -n 3 tests/selenium/ --junitxml=tests/reports/selenium-report.xml` → all pass on the Grid
 - [x] `k6 run --summary-export=tests/reports/k6-summary.json tests/k6_load.js` → 0% failed, p95 < 800 ms
-- [ ] CI run on GitHub green (or failures understood) → **commit + push (W3)**
+- [x] CI run on GitHub green (run on `3c02d2e`) → **commit + push (W3)**
 
 ## Phase 6: Mobile + Appium [PLAN §8, §7.4]
 
@@ -88,7 +88,7 @@ Build:
 - [x] `nascon://` intent-filter, `singleTask`, deep-link router, splash skipped for deep links
 - [x] Guest match live + co-stream screens (no login wall), test tags as resource ids
 - [x] Video player (native HLS) and live chat on both screens
-- [ ] In-app QR scanner and broadcaster screen (not built: no time)
+- [x] In-app QR scanner (ZXing) and broadcaster screen (stream key, RTMP/WHIP URLs, rotate/revoke, preview)
 - [x] APK rebuilt: `mobile/release/scorix-day2.apk` (debug-signed; release keystore is not on this laptop)
 
 Verification gate (on the Infinix phone):
@@ -104,3 +104,11 @@ Verification gate (on the Infinix phone):
 - [x] Salt grep clean. `git merge-base --is-ancestor 596c2bc HEAD`
 - [x] Cold boot test (`down -v` + `up --build`): health + 3 grid nodes in 15 s
 - [ ] **Final push before 14:00 (grace 14:05:00)**
+
+## Phase 8: Extended window additions (deadline moved to 14:20)
+
+- [x] FR-3.1 athlete profile + concurrency-safe follow/unfollow (40-request toggle burst, no drift)
+- [x] FR-3.2 member stream key route for the app
+- [x] FR-3.3 host controls: signed invite token, mute, spotlight, kick
+- [x] FR-5.2 notification bus: 3 attempts with exponential backoff, then DLQ (`simulate_dlq: true`)
+- [x] App: Scan QR, Go live, athlete profile with Follow; Appium 3/3 on the new build

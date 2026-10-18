@@ -32,6 +32,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -91,6 +93,20 @@ fun MainScreen(session: SessionState) {
         Scaffold(
             contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
             snackbarHost = { SnackbarHost(snack) },
+            floatingActionButton = {
+                if (route == "fixtures") {
+                    val scan = rememberQrScanner { g.link.value = it }
+                    androidx.compose.foundation.layout.Column(horizontalAlignment = androidx.compose.ui.Alignment.End,
+                        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)) {
+                        if (session.user.playerId != null) {
+                            androidx.compose.material3.ExtendedFloatingActionButton(onClick = { nav.navigate("broadcast") },
+                                modifier = Modifier.testTag("go-live-button")) { Text("Go live") }
+                        }
+                        androidx.compose.material3.ExtendedFloatingActionButton(onClick = scan,
+                            modifier = Modifier.testTag("scan-qr-button")) { Text("Scan QR") }
+                    }
+                }
+            },
             bottomBar = {
                 NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
                     tabs.forEach { t ->
@@ -129,6 +145,7 @@ fun MainScreen(session: SessionState) {
                     composable("receipt/{id}") { ReceiptScreen(it.arguments?.getString("id") ?: "") }
                     composable("orders") { OrdersScreen() }
                     composable("queue") { QueueScreen() }
+                    composable("broadcast") { BroadcastScreen { nav.popBackStack() } }
                 }
             }
         }

@@ -58,3 +58,16 @@ def test_host_controls(fresh):
     viewer = login(fresh, "viewer@nascon.test")
     r = fresh.post("/api/v1/costream/cs-ctl/control", {"action": "kick", "player_id": "player-beta-1"}, headers=viewer)
     assert r.status_code == 403
+
+
+def test_failed_notification_retries_then_dead_letters(fresh):
+    import uuid
+    before = fresh.post("/audit/v1/moderation/test", {"chat_room_id": "r", "incoming_messages": []}).json()
+    r = fresh.post("/audit/v1/events", {"event_id": "dlq-" + uuid.uuid4().hex[:8], "match_id": "match-m1",
+                                        "type": "score", "payload": {"team_id": "club-alpha-1", "event_type": "goal"},
+                                        "simulate_dlq": True})
+    assert r.status_code == 201
+    after = fresh.post("/audit/v1/moderation/test", {"chat_room_id": "r", "incoming_messages": []}).json()
+    assert after["dlq_status"]["queue_depth"] == before["dlq_status"]["queue_depth"] + 1
+    last = after["dlq_status"]["undelivered_events"][-1]
+    assert last["type"] == "score_update" and last["attempts"] == 3 and last["target"] == "match:match-m1"
