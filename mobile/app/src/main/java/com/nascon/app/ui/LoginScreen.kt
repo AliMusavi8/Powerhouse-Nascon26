@@ -57,6 +57,10 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.runtime.LaunchedEffect
+import com.nascon.app.data.arr
+import com.nascon.app.data.str
 import com.nascon.app.data.ApiError
 import com.nascon.app.data.jobj
 import com.nascon.app.graph
@@ -81,17 +85,32 @@ fun LoginScreen() {
     var showPw by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
+    var signUp by remember { mutableStateOf(false) }
+    var name by remember { mutableStateOf("") }
+    var sport by remember { mutableStateOf(g.settings.sport) }
+    var sports by remember { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
+
+    // Sports are data from the server (never hard-coded in the app).
+    LaunchedEffect(server) {
+        try {
+            sports = g.api.get("/api/v1/sports", auth = "").arr("sports").take(4)
+                .mapNotNull { s -> s.str("sport_id")?.let { it to (s.str("name") ?: it) } }
+            if (sport.isEmpty() && sports.isNotEmpty()) sport = sports.first().first
+        } catch (e: ApiError) { /* offline: the picker stays hidden */ }
+    }
 
     fun submit() {
-        if (email.isBlank() || password.isBlank()) {
-            error = "Enter your email and password."; return
+        if (email.isBlank() || password.isBlank() || (signUp && name.isBlank())) {
+            error = if (signUp) "Enter your name, email and a password." else "Enter your email and password."; return
         }
+        g.settings.sport = sport
         busy = true; error = null
         g.settings.serverUrl = server
         g.settings.lastEmail = email.trim()
         scope.launch {
             try {
-                val login = g.api.post("/api/v1/auth/login", jobj("email" to email.trim(), "password" to password))
+                val login = if (signUp) g.api.post("/api/v1/auth/register", jobj("name" to name.trim(), "email" to email.trim(), "password" to password))
+                            else g.api.post("/api/v1/auth/login", jobj("email" to email.trim(), "password" to password))
                 val token = login["token"]?.toString()?.trim('"')
                 val me = try { g.api.get("/api/v1/me", auth = token) } catch (e: ApiError) { null }
                 g.session.signIn(email.trim(), password, login, me)
@@ -100,6 +119,7 @@ fun LoginScreen() {
                     e.isNetwork && g.session.signInOffline(email.trim(), password) -> null
                     e.isNetwork -> "Can't reach the server at $server. Check the address and your connection."
                     e.status == 401 -> "That email and password don't match."
+                    e.code == "EMAIL_EXISTS" -> "An account with this email already exists. Sign in instead."
                     else -> e.message
                 }
             } finally {
@@ -137,8 +157,28 @@ fun LoginScreen() {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Column(Modifier.widthIn(max = 460.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                Text("Welcome back", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                Text("Sign in to follow your league.", color = extra.muted)
+                Text(if (signUp) "Create your account" else "Welcome back", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                Text(if (signUp) "Free, and it takes a few seconds." else "Sign in to follow your league.", color = extra.muted)
+                if (sports.isNotEmpty()) {
+                    Text("Choose your sport", fontWeight = FontWeight.SemiBold)
+                    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        sports.forEach { (id, label) ->
+                            val on = id == sport
+                            Box(
+                                Modifier.clip(RoundedCornerShape(50))
+                                    .background(if (on) extra.ink else MaterialTheme.colorScheme.surface)
+                                    .border(1.dp, if (on) extra.ink else extra.line, RoundedCornerShape(50))
+                                    .clickable(role = Role.RadioButton, onClickLabel = "Choose $label") { sport = id }
+                                    .heightIn(min = 48.dp).padding(horizontal = 18.dp),
+                                contentAlignment = Alignment.Center,
+                            ) { Text(label, color = if (on) extra.onInk else MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold) }
+                        }
+                    }
+                }
+                if (signUp) OutlinedTextField(
+                    value = name, onValueChange = { name = it }, label = { Text("Your name") }, singleLine = true, shape = pill,
+                    colors = fieldColors, modifier = Modifier.fillMaxWidth(),
+                )
                 OutlinedTextField(
                     value = email, onValueChange = { email = it }, label = { Text("Email") }, singleLine = true, shape = pill,
                     leadingIcon = { Icon(Icons.Filled.Mail, null) }, colors = fieldColors,
@@ -166,7 +206,10 @@ fun LoginScreen() {
                 }
                 Button(onClick = { submit() }, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
                     if (busy) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
-                    else Text("Sign in", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    else Text(if (signUp) "Create account" else "Sign in", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                }
+                TextButton(onClick = { signUp = !signUp; error = null }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                    Text(if (signUp) "Already have an account? Sign in" else "New to Scorix? Create an account", fontWeight = FontWeight.SemiBold)
                 }
                 TextButton(onClick = { showServer = !showServer }, modifier = Modifier.heightIn(min = 48.dp)) {
                     Icon(Icons.Filled.Dns, null, modifier = Modifier.size(18.dp))

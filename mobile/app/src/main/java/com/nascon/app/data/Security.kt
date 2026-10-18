@@ -75,6 +75,11 @@ class Settings(context: Context) {
         get() = prefs.getString("device_id", null) ?: ("dev-" + java.util.UUID.randomUUID().toString().take(12)).also { deviceId = it }
         set(v) = prefs.edit().putString("device_id", v).apply()
 
+    /** Sport chosen on the sign-in screen (a sport_id from GET /api/v1/sports); picks the starting league. */
+    var sport: String
+        get() = prefs.getString("sport", "") ?: ""
+        set(v) = prefs.edit().putString("sport", v).apply()
+
     var lastEmail: String
         get() = prefs.getString("last_email", "") ?: ""
         set(v) = prefs.edit().putString("last_email", v).apply()

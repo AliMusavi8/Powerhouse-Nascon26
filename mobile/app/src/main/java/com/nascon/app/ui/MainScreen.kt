@@ -166,10 +166,14 @@ fun rememberLeagues(): List<Pair<String, String>> {
     val res = rememberRes("/api/v1/leagues")
     val league = LocalLeague.current
     val ui = LocalUi.current
-    val list = res.loaded?.data?.arr("leagues")?.mapNotNull { l -> l.str("league_id")?.let { it to (l.str("name") ?: it) } } ?: emptyList()
+    val rows = res.loaded?.data?.arr("leagues") ?: emptyList()
+    val list = rows.mapNotNull { l -> l.str("league_id")?.let { it to (l.str("name") ?: it) } }
+    val sport = graph().settings.sport
     LaunchedEffect(list) {
         if (league.leagueId == null && list.isNotEmpty()) {
-            league.leagueId = list.firstOrNull { it.first == ui.session.user.leagueId }?.first ?: list.first().first
+            // Start in a league of the sport picked at sign-in, then the user's own league, then the first one.
+            league.leagueId = rows.firstOrNull { sport.isNotEmpty() && it.str("sport_id") == sport }?.str("league_id")
+                ?: list.firstOrNull { it.first == ui.session.user.leagueId }?.first ?: list.first().first
         }
     }
     return list

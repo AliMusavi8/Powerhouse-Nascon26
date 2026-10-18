@@ -58,6 +58,33 @@ def login(email, password) -> dict:
     return {"token": issue_token(user), "user": public_user(user)}
 
 
+def register(name, email, password) -> dict:
+    """Self sign-up: a read-only viewer account in the default tenant, signed in straight away."""
+    import re
+    import secrets
+    from .passwords import hash_password
+    bad = []
+    if not isinstance(name, str) or not (1 <= len(name.strip()) <= 80):
+        bad.append("name")
+    if not isinstance(email, str) or not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email.strip()) or len(email) > 200:
+        bad.append("email")
+    if not isinstance(password, str) or len(password) < 8:
+        bad.append("password")
+    if bad:
+        raise ApiError(400, "VALIDATION_ERROR", "Check your name, email and a password of at least 8 characters.",
+                       {"fields": bad})
+    user = {"user_id": "u-" + secrets.token_hex(6), "email": email.strip().lower(), "name": name.strip(),
+            "role": "viewer", "tenant_id": "tenant-alpha"}
+    with db.tx() as cur:
+        db.lock(cur, "register:" + user["email"])
+        cur.execute("SELECT 1 FROM users WHERE lower(email) = %s", (user["email"],))
+        if cur.fetchone():
+            raise ApiError(409, "EMAIL_EXISTS", "An account with this email already exists.", {"email": user["email"]})
+        cur.execute("INSERT INTO users (user_id, email, password_hash, name, role, tenant_id) VALUES (%s,%s,%s,%s,%s,%s)",
+                    (user["user_id"], user["email"], hash_password(password), user["name"], "viewer", "tenant-alpha"))
+    return {"token": issue_token(user), "user": public_user(user)}
+
+
 def public_user(user: dict) -> dict:
     return {k: user.get(k) for k in ("user_id", "email", "name", "role", "tenant_id", "league_id", "club_id",
                                      "player_id")}

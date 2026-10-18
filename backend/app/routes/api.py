@@ -39,6 +39,29 @@ def _tenant(tenant_id):
         return cur.fetchone()
 
 
+def _sports() -> list[dict]:
+    with db.tx() as cur:
+        cur.execute("SELECT sport_id, config, created_at FROM sports")
+        rows = cur.fetchall()
+    from ..seed import sports_seed
+    seeded = [s["sport_id"] for s in sports_seed()]
+    rows.sort(key=lambda r: (r["created_at"], seeded.index(r["sport_id"]) if r["sport_id"] in seeded else len(seeded)))
+    return [{"sport_id": r["sport_id"], "name": r["config"].get("name", r["sport_id"]),
+             "scoring_model": r["config"].get("scoring_model")} for r in rows]
+
+
+@router.get("/sports")
+async def sports():
+    """Public: the sports this platform runs (data, never hard-coded in clients)."""
+    return {"sports": await run_in_threadpool(_sports)}
+
+
+@router.post("/auth/register")
+async def register(request: Request):
+    body = await read_object(request)
+    return respond(201, await run_in_threadpool(auth.register, body.get("name"), body.get("email"), body.get("password")))
+
+
 @router.get("/me")
 async def me(request: Request):
     who = auth.principal(request)
