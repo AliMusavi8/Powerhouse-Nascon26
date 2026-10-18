@@ -91,7 +91,7 @@ RUN_INTEGRATION=1 ./run_tests.sh     # also grader-style HTTP tests against the 
 
 ## Mobile app
 
-The app is called **Scorix**. The source is in `mobile/` (Kotlin, Jetpack Compose, Room, WorkManager, OkHttp). The installable build is `mobile/release/app-release.apk` (minSdk 26, so Android 8.0+ including Android 10).
+The app is called **Scorix**. The source is in `mobile/` (Kotlin, Jetpack Compose, Room, WorkManager, OkHttp). The installable build is `mobile/release/scorix-day2.apk` (Day 2: deep links, live screens; debug-signed). The Day 1 build `mobile/release/app-release.apk` is kept. minSdk 26, so Android 8.0+.
 
 ### Install and connect
 

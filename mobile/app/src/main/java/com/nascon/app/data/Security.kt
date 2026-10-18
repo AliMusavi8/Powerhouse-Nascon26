@@ -80,6 +80,12 @@ class Settings(context: Context) {
         set(v) = prefs.edit().putString("last_email", v).apply()
 
     companion object {
-        const val DEFAULT_URL = "http://10.0.2.2:8080"
+        /** Emulators reach the host at 10.0.2.2; a USB phone reaches it through `adb reverse tcp:8080 tcp:8080`. */
+        val DEFAULT_URL: String = if (isEmulator()) "http://10.0.2.2:8080" else "http://localhost:8080"
+
+        private fun isEmulator(): Boolean {
+            val b = android.os.Build.FINGERPRINT + android.os.Build.MODEL + android.os.Build.PRODUCT + android.os.Build.HARDWARE
+            return listOf("generic", "emulator", "sdk_gphone", "goldfish", "ranchu", "Android SDK").any { b.contains(it, ignoreCase = true) }
+        }
     }
 }

@@ -85,21 +85,22 @@ Verification gate:
 ## Phase 6: Mobile + Appium [PLAN §8, §7.4]
 
 Build:
-- [ ] `nascon://` intent-filter, `singleTask`, deep-link router, splash skipped for deep links
-- [ ] Guest match live + co-stream screens (no login wall), test tags as resource ids
-- [ ] Video player, chat, QR scanner, broadcaster screen (in that priority)
-- [ ] Signed APK rebuilt
+- [x] `nascon://` intent-filter, `singleTask`, deep-link router, splash skipped for deep links
+- [x] Guest match live + co-stream screens (no login wall), test tags as resource ids
+- [x] Video player (native HLS) and live chat on both screens
+- [ ] In-app QR scanner and broadcaster screen (not built: no time)
+- [x] APK rebuilt: `mobile/release/scorix-day2.apk` (debug-signed; release keystore is not on this laptop)
 
 Verification gate (on the Infinix phone):
-- [ ] `adb shell am start -W -a android.intent.action.VIEW -d "nascon://entity/match-m1"` → match screen in under 2 s, logged out too
-- [ ] Same for `nascon://stream/cs-session-101`
-- [ ] `curl localhost:4723/status` → ready. `pytest tests/appium --junitxml=tests/reports/appium-report.xml` passes
-- [ ] Cross-surface chat test passes (app + grid browser in under 3 s)
+- [x] `adb shell am start -W -a android.intent.action.VIEW -d "nascon://entity/match-m1"` → match screen in under 2 s, logged out too
+- [x] Same for `nascon://stream/cs-session-101`
+- [x] `curl localhost:4723/status` → ready. `pytest tests/appium --junitxml=tests/reports/appium-report.xml` passes
+- [x] Cross-surface chat test passes (app + grid browser in under 3 s)
 
 ## Phase 7: Delivery [PLAN §12]
 
-- [ ] `COVERAGE_DAY2.json`, `TRACEABILITY.md` (Phase II IDs), README Day 2 section, ADRs
-- [ ] `tests/reports/selenium-report.xml`, `appium-report.xml`, `k6-summary.json` committed
-- [ ] Salt grep clean. `git merge-base --is-ancestor 596c2bc HEAD`
-- [ ] Clean-clone boot test
+- [x] `COVERAGE_DAY2.json`, `TRACEABILITY.md` (Phase II IDs), README Day 2 section, ADRs
+- [x] `tests/reports/selenium-report.xml`, `appium-report.xml`, `k6-summary.json` committed
+- [x] Salt grep clean. `git merge-base --is-ancestor 596c2bc HEAD`
+- [x] Cold boot test (`down -v` + `up --build`): health + 3 grid nodes in 15 s
 - [ ] **Final push before 14:00 (grace 14:05:00)**

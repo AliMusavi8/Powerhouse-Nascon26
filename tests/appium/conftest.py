@@ -28,6 +28,8 @@ def driver():
     opts.app_activity = ".MainActivity"
     opts.no_reset = True
     opts.new_command_timeout = 120
+    opts.set_capability("appium:skipDeviceInitialization", True)  # no Appium Settings helper needed for deep links
+    opts.set_capability("appium:ignoreHiddenApiPolicyError", True)
     d = webdriver.Remote(APPIUM_URL, options=opts)
     yield d
     d.quit()

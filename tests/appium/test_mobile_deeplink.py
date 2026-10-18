@@ -10,6 +10,11 @@ from selenium.webdriver.support.ui import WebDriverWait
 from conftest import API_BASE, GRID_URL, PACKAGE, WEB_BASE
 
 
+def tag(name):
+    # Compose test tags are exposed as bare resource ids (testTagsAsResourceId), without the package prefix.
+    return AppiumBy.ANDROID_UIAUTOMATOR, f'new UiSelector().resourceId("{name}")'
+
+
 def deep_link(driver, url):
     # Same intent the desk runner fires: adb shell am start -W -a android.intent.action.VIEW -d <url>
     driver.execute_script("mobile: deepLink", {"url": url, "package": PACKAGE})
@@ -18,7 +23,7 @@ def deep_link(driver, url):
 def test_match_deep_link_opens_live_screen(driver):
     start = time.monotonic()
     deep_link(driver, "nascon://entity/match-m1")
-    WebDriverWait(driver, 2).until(EC.presence_of_element_located((AppiumBy.ID, "match-live-screen")))
+    WebDriverWait(driver, 2).until(EC.presence_of_element_located(tag("match-live-screen")))
     assert time.monotonic() - start < 2.5
     assert driver.current_package == PACKAGE
 
@@ -28,7 +33,7 @@ def test_costream_deep_link_opens_costream_screen(driver):
         "session_id": "cs-session-101", "host_player_id": "player-alpha-1",
         "participants": ["player-alpha-1", "player-alpha-2", "player-beta-1", "player-beta-2"]}, timeout=5)
     deep_link(driver, "nascon://stream/cs-session-101")
-    WebDriverWait(driver, 2).until(EC.presence_of_element_located((AppiumBy.ID, "costream-screen")))
+    WebDriverWait(driver, 2).until(EC.presence_of_element_located(tag("costream-screen")))
 
 
 def test_cross_surface_chat_sync(driver):
@@ -37,7 +42,7 @@ def test_cross_surface_chat_sync(driver):
     from selenium.webdriver.common.by import By
 
     deep_link(driver, "nascon://stream/cs-session-101")
-    WebDriverWait(driver, 2).until(EC.presence_of_element_located((AppiumBy.ID, "costream-screen")))
+    WebDriverWait(driver, 2).until(EC.presence_of_element_located(tag("costream-screen")))
     opts = webdriver.ChromeOptions()
     opts.add_argument("--headless=new")
     web = webdriver.Remote(command_executor=GRID_URL, options=opts)
