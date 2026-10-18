@@ -75,7 +75,7 @@ fun rememberQrScanner(onLink: (DeepLink) -> Unit): () -> Unit {
     }
     return {
         launcher.launch(ScanOptions().setDesiredBarcodeFormats(ScanOptions.QR_CODE).setPrompt("Scan a Scorix QR code")
-            .setBeepEnabled(false).setOrientationLocked(false))
+            .setBeepEnabled(false).setOrientationLocked(true))
     }
 }
 

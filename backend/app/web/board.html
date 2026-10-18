@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b5d2a">
+  <title>Scorix Live · Scan to watch</title>
+  <link rel="stylesheet" href="/web/static/board.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="hero">
+    <div class="hero-inner">
+      <span class="brand">Scorix</span>
+      <h1>Scan. Watch. Cheer.</h1>
+      <p>Point your phone camera at any code below. The match opens instantly in your browser,
+         with no app and no account. Have the Scorix app? It opens right in the app.</p>
+    </div>
+  </header>
+
+  <main id="main">
+    <section aria-labelledby="matches-title">
+      <div class="section-head">
+        <h2 id="matches-title">Matches</h2>
+        <p>Codes stay the same; they always open the right page as the match moves from preview to live to replay.</p>
+      </div>
+      <div class="grid" id="matches" aria-live="polite"><p class="loading">Loading live matches…</p></div>
+    </section>
+
+    <section aria-labelledby="costreams-title" id="costreams-section" hidden>
+      <div class="section-head"><h2 id="costreams-title">Live co-streams</h2></div>
+      <div class="grid" id="costreams"></div>
+    </section>
+
+    <section aria-labelledby="players-title">
+      <div class="section-head"><h2 id="players-title">Athletes</h2></div>
+      <div class="grid compact" id="players"></div>
+    </section>
+
+    <section aria-labelledby="clubs-title">
+      <div class="section-head"><h2 id="clubs-title">Clubs</h2></div>
+      <div class="grid compact" id="clubs"></div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p>Scorix · NaSCon '26. Scans are counted anonymously: no IP addresses, cookies or device fingerprints are stored.</p>
+  </footer>
+
+  <template id="card">
+    <article class="card">
+      <div class="qr-wrap"><img class="qr" alt="" width="180" height="180" loading="lazy"></div>
+      <div class="body">
+        <span class="pill"></span>
+        <h3 class="title"></h3>
+        <p class="sub"></p>
+        <p class="score"></p>
+        <a class="short" href="#"></a>
+        <div class="actions">
+          <a class="btn primary open" href="#">Open</a>
+          <a class="btn ghost png" href="#" download>PNG</a>
+          <a class="btn ghost pdf" href="#" target="_blank" rel="noopener">Poster PDF</a>
+        </div>
+        <p class="scans"></p>
+      </div>
+    </article>
+  </template>
+
+  <script src="/web/static/board.js" defer></script>
+</body>
+</html>

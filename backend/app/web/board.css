@@ -1,0 +1,81 @@
+:root {
+  --brand: #0b5d2a;
+  --brand-2: #138a40;
+  --brand-dark: #073b1b;
+  --ink: #111827;
+  --muted: #4b5563;
+  --page: #f4f1e8;
+  --surface: #ffffff;
+  --line: #e2ded2;
+  --live: #c81e1e;
+  --focus: #1d4ed8;
+  --radius: 20px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); background: var(--page); }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.skip { position: absolute; left: -999px; top: 8px; background: #fff; padding: 12px; color: var(--ink); }
+.skip:focus { left: 8px; z-index: 10; }
+
+.hero {
+  color: #fff;
+  background:
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, .05) 0 28px, transparent 28px 56px),
+    linear-gradient(135deg, var(--brand-dark), var(--brand) 55%, var(--brand-2));
+  padding: 40px 16px 72px;
+  border-radius: 0 0 36px 36px;
+}
+.hero-inner { max-width: 1100px; margin: 0 auto; }
+.brand { display: inline-block; font-weight: 800; letter-spacing: .5px; background: #fff; color: var(--brand-dark);
+  padding: 6px 14px; border-radius: 999px; }
+.hero h1 { font-size: clamp(32px, 6vw, 56px); line-height: 1.05; margin: 18px 0 12px; letter-spacing: -.5px; }
+.hero p { max-width: 640px; font-size: 18px; margin: 0; color: #e7f5ec; }
+
+main { max-width: 1100px; margin: -40px auto 0; padding: 0 16px 32px; display: grid; gap: 32px; }
+.section-head h2 { margin: 0; font-size: 24px; }
+.section-head p { margin: 4px 0 0; color: var(--muted); }
+.section-head { margin-bottom: 14px; }
+section:first-child .section-head { background: var(--surface); border-radius: var(--radius); padding: 16px 20px;
+  box-shadow: 0 10px 30px rgba(7, 59, 27, .12); }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.grid.compact { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.loading { color: var(--muted); }
+
+.card {
+  display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: start;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px;
+  box-shadow: 0 6px 18px rgba(17, 24, 39, .06); transition: transform .15s ease, box-shadow .15s ease;
+}
+.card:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(17, 24, 39, .1); }
+.qr-wrap { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 8px; }
+.qr { display: block; width: 132px; height: 132px; image-rendering: pixelated; }
+.grid:not(.compact) .qr { width: 160px; height: 160px; }
+.body { min-width: 0; display: grid; gap: 4px; }
+.title { margin: 0; font-size: 18px; line-height: 1.25; }
+.sub { margin: 0; color: var(--muted); }
+.sub:empty, .score:empty { display: none; }
+.score { margin: 2px 0; font-size: 28px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.pill { justify-self: start; font-size: 13px; font-weight: 700; padding: 2px 10px; border-radius: 999px;
+  background: #e8efe9; color: var(--brand-dark); text-transform: uppercase; letter-spacing: .4px; }
+.pill.live { background: var(--live); color: #fff; }
+.pill.live::before { content: "● "; }
+.short { color: var(--focus); font-size: 14px; word-break: break-all; }
+.scans { margin: 0; color: var(--muted); font-size: 13px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; min-width: 48px;
+  padding: 0 16px; border-radius: 999px; font-weight: 700; text-decoration: none; border: 2px solid var(--brand); }
+.btn.primary { background: var(--brand); color: #fff; }
+.btn.primary:hover { background: var(--brand-dark); }
+.btn.ghost { background: #fff; color: var(--brand-dark); }
+
+.foot { text-align: center; color: var(--muted); padding: 24px 16px 40px; font-size: 14px; }
+[hidden] { display: none !important; }
+
+@media (max-width: 520px) {
+  .card { grid-template-columns: 1fr; }
+  .qr-wrap { justify-self: center; }
+  .grid:not(.compact) .qr, .qr { width: 200px; height: 200px; }
+}

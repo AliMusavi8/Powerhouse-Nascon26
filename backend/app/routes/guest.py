@@ -213,3 +213,41 @@ async def costream_socket(ws: WebSocket, session_id: str):
         if player_id:
             await asyncio.sleep(0.5)
             await run_in_threadpool(costream.host_disconnected, session_id, player_id)
+
+
+# ---------------------------------------------------------------- QR board (/web): where fans find the codes
+
+def qr_board() -> dict:
+    from ..domain import scoring
+    from ..services import qr
+    with db.tx() as cur:
+        cur.execute("SELECT match_id FROM matches ORDER BY (match_id = 'match-m1') DESC, ord LIMIT 40")
+        logs = matches.load_logs(cur, [r["match_id"] for r in cur.fetchall()])
+        cur.execute("SELECT club_id, name FROM clubs ORDER BY tenant_id, club_id")
+        clubs = cur.fetchall()
+        cur.execute("SELECT player_id, p.name, c.name AS club FROM players p LEFT JOIN clubs c USING (club_id) "
+                    "WHERE player_id LIKE 'player-%%' ORDER BY player_id LIMIT 8")
+        players = cur.fetchall()
+        cur.execute("SELECT session_id, state FROM costream_sessions ORDER BY updated_at DESC LIMIT 6")
+        sessions = cur.fetchall()
+    names = {c["club_id"]: c["name"] for c in clubs}
+    rank = {"in_progress": 0, "upcoming": 1, "postponed": 2, "completed": 3}
+    ordered = sorted(logs.values(), key=lambda lg: (lg.match["match_id"] != "match-m1", rank.get(lg.status, 4)))[:6]
+    out = {"matches": [], "costreams": [], "clubs": [], "players": []}
+    for lg in ordered:
+        p = scoring.project(lg)
+        out["matches"].append(dict(qr.resolve(lg.match["match_id"], True), title=f"{names.get(p['home']['team_id'], p['home']['team_id'])} vs {names.get(p['away']['team_id'], p['away']['team_id'])}",
+                                   score=f"{p['home']['score']} - {p['away']['score']}", scheduled_at=lg.match.get("scheduled_at")))
+    for s in sessions:
+        if s["state"]["status"] == "active":
+            out["costreams"].append(dict(qr.resolve(s["session_id"], True), title=f"Co-stream · {s['state']['participant_count']} live"))
+    for c in clubs[:4]:
+        out["clubs"].append(dict(qr.resolve(c["club_id"], True), title=c["name"]))
+    for p in players:
+        out["players"].append(dict(qr.resolve(p["player_id"], True), title=p["name"], subtitle=p["club"]))
+    return out
+
+
+@router.get("/guest/qr-board")
+async def guest_qr_board():
+    return await run_in_threadpool(qr_board)

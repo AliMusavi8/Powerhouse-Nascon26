@@ -9,17 +9,24 @@ from ..errors import not_found
 
 router = APIRouter()
 WEB = Path(__file__).resolve().parent.parent / "web"
-STATIC = {"app.js": "text/javascript", "app.css": "text/css", "hls.min.js": "text/javascript"}
+STATIC = {"app.js": "text/javascript", "app.css": "text/css", "hls.min.js": "text/javascript",
+          "board.js": "text/javascript", "board.css": "text/css"}
 MATCH_VIEWS = ("live", "preview", "vod", "notice")
 
 
-@lru_cache(maxsize=8)
+@lru_cache(maxsize=16)
 def _read(name: str) -> bytes:
     return (WEB / name).read_bytes()
 
 
 def _page() -> HTMLResponse:
     return HTMLResponse(_read("player.html"), headers={"Cache-Control": "no-store"})
+
+
+@router.get("/web")
+@router.get("/web/")
+async def board_page():
+    return HTMLResponse(_read("board.html"), headers={"Cache-Control": "no-store"})
 
 
 @router.get("/web/static/{name}")
