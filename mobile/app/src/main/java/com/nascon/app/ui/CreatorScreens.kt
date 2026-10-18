@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -189,4 +190,67 @@ fun BroadcastScreen(onBack: () -> Unit) {
             note?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         }
     } }
+}
+
+// ---------------------------------------------------------------- organiser: new match
+
+@Composable
+fun NewMatchDialog(leagueId: String, onDismiss: () -> Unit, onCreated: (String) -> Unit) {
+    val g = graph()
+    val scope = rememberCoroutineScope()
+    var clubs by remember { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
+    var home by remember { mutableStateOf<String?>(null) }
+    var away by remember { mutableStateOf<String?>(null) }
+    var busy by remember { mutableStateOf(false) }
+    var note by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(leagueId) {
+        try {
+            clubs = (g.api.get("/api/v1/clubs")["clubs"] as? kotlinx.serialization.json.JsonArray ?: emptyList())
+                .mapNotNull { it as? JsonObject }.filter { it.str("league_id") == leagueId }
+                .mapNotNull { c -> c.str("club_id")?.let { it to (c.str("name") ?: it) } }
+        } catch (e: ApiError) { note = e.message }
+    }
+
+    @Composable
+    fun Picker(label: String, selected: String?, other: String?, onPick: (String) -> Unit) {
+        Text(label, fontWeight = FontWeight.SemiBold)
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            clubs.filter { it.first != other }.forEach { (id, name) ->
+                val on = id == selected
+                Surface(onClick = { onPick(id) }, shape = RoundedCornerShape(50),
+                    color = if (on) extra.ink else MaterialTheme.colorScheme.surface,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, if (on) extra.ink else extra.line),
+                    modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(name, color = if (on) extra.onInk else MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp))
+                }
+            }
+        }
+    }
+
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("New match") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                if (clubs.isEmpty() && note == null) Text("Loading clubs…", color = extra.muted)
+                Picker("Home", home, away) { home = it }
+                Picker("Away", away, home) { away = it }
+                note?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            }
+        },
+        confirmButton = {
+            Button(enabled = home != null && away != null && !busy, onClick = {
+                busy = true
+                scope.launch {
+                    try {
+                        val r = g.api.post("/api/v1/leagues/$leagueId/matches",
+                            buildJsonObject { put("home_team_id", home!!); put("away_team_id", away!!) })
+                        r.str("match_id")?.let(onCreated)
+                    } catch (e: ApiError) { note = e.message } finally { busy = false }
+                }
+            }, modifier = Modifier.heightIn(min = 48.dp).testTag("create-match-button")) { Text("Create") }
+        },
+        dismissButton = { androidx.compose.material3.TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
 }

@@ -71,3 +71,27 @@ def test_failed_notification_retries_then_dead_letters(fresh):
     assert after["dlq_status"]["queue_depth"] == before["dlq_status"]["queue_depth"] + 1
     last = after["dlq_status"]["undelivered_events"][-1]
     assert last["type"] == "score_update" and last["attempts"] == 3 and last["target"] == "match:match-m1"
+
+
+def test_organiser_creates_match_with_qr(fresh):
+    org = login(fresh, "organizer@nascon.test")
+    r = fresh.post("/api/v1/leagues/league-alpha-1/matches",
+                   {"home_team_id": "club-alpha-2", "away_team_id": "club-alpha-1", "venue": "City Ground"}, headers=org)
+    assert r.status_code == 201, r.text
+    m = r.json()
+    assert m["status"] == "upcoming" and m["qr"]["target_route"] == f"/web/matches/{m['match_id']}/preview"
+    assert fresh.get(f"/audit/v1/qr/{m['match_id']}/export.png").content[:4] == b"\x89PNG"
+    start = fresh.post("/audit/v1/events", {"event_id": "s-" + m["match_id"], "match_id": m["match_id"],
+                                            "type": "match_start", "payload": {}})
+    assert start.status_code == 201
+    assert fresh.get(f"/audit/v1/qr/{m['match_id']}?inspect=true").json()["target_route"].endswith("/live")
+    bad = fresh.post("/api/v1/leagues/league-alpha-1/matches", {"home_team_id": "club-alpha-1",
+                                                                 "away_team_id": "club-alpha-1"}, headers=org)
+    assert bad.status_code == 400
+    other = fresh.post("/api/v1/leagues/league-alpha-1/matches", {"home_team_id": "club-alpha-1",
+                                                                   "away_team_id": "club-beta-1"}, headers=org)
+    assert other.status_code in (403, 404)
+    viewer = login(fresh, "viewer@nascon.test")
+    assert fresh.post("/api/v1/leagues/league-alpha-1/matches", {"home_team_id": "club-alpha-2",
+                                                                  "away_team_id": "club-alpha-1"},
+                      headers=viewer).status_code == 403

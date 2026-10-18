@@ -187,3 +187,44 @@ async def costream_invite(request: Request, session_id: str):
     who = _who(request)
     body = await read_object(request)
     return await run_in_threadpool(_invite, session_id, _me(who), who.get("role"), body.get("player_id"))
+
+
+# ---------------------------------------------------------------- organiser: create a match (gets its dynamic QR at once)
+
+def _create_match(who: dict, league_id: str, body: dict) -> dict:
+    import secrets
+    from ..domain.rbac import require
+    from ..domain.validate import is_id
+    from ..services import qr
+    home, away = body.get("home_team_id"), body.get("away_team_id")
+    bad = [f for f, v in (("home_team_id", home), ("away_team_id", away)) if not is_id(v)]
+    if not bad and home == away:
+        bad.append("away_team_id")
+    for f in ("scheduled_at", "venue"):
+        if body.get(f) is not None and (not isinstance(body[f], str) or len(body[f]) > 100):
+            bad.append(f)
+    if bad:
+        raise validation(bad)
+    require(who, "league.fixtures.write", auth.league_target(league_id))
+    with db.tx() as cur:
+        cur.execute("SELECT sport_id FROM leagues WHERE league_id = %s", (league_id,))
+        sport = cur.fetchone()["sport_id"]
+        cur.execute("SELECT club_id FROM clubs WHERE league_id = %s AND club_id = ANY(%s)", (league_id, [home, away]))
+        found = {r["club_id"] for r in cur.fetchall()}
+        for club in (home, away):
+            if club not in found:
+                raise not_found("CLUB_NOT_FOUND", f"Club {club} is not in league {league_id}.", club_id=club)
+        match_id = "match-" + secrets.token_hex(4)
+        cur.execute("INSERT INTO matches (match_id, sport_id, league_id, home_team_id, away_team_id, scheduled_at, venue)"
+                    " VALUES (%s,%s,%s,%s,%s,%s,%s)",
+                    (match_id, sport, league_id, home, away, body.get("scheduled_at"), body.get("venue")))
+    qr.invalidate()
+    return {"match_id": match_id, "league_id": league_id, "sport_id": sport, "home_team_id": home,
+            "away_team_id": away, "status": "upcoming", "qr": qr.resolve(match_id, True)}
+
+
+@router.post("/leagues/{league_id}/matches")
+async def create_match(request: Request, league_id: str):
+    who = _who(request)
+    body = await read_object(request)
+    return respond(201, await run_in_threadpool(_create_match, who, league_id, body))

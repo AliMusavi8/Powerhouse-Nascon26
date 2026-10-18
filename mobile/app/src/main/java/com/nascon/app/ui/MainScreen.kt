@@ -96,11 +96,22 @@ fun MainScreen(session: SessionState) {
             floatingActionButton = {
                 if (route == "fixtures") {
                     val scan = rememberQrScanner { g.link.value = it }
+                    var newMatch by remember { mutableStateOf(false) }
+                    val leagueId = league.leagueId
+                    if (newMatch && leagueId != null) NewMatchDialog(leagueId, { newMatch = false }) { id ->
+                        newMatch = false
+                        ui.toast("Match created. Its QR code is ready on the web board.")
+                        nav.navigate("match/$id")
+                    }
                     androidx.compose.foundation.layout.Column(horizontalAlignment = androidx.compose.ui.Alignment.End,
                         verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)) {
                         if (session.user.playerId != null) {
                             androidx.compose.material3.ExtendedFloatingActionButton(onClick = { nav.navigate("broadcast") },
                                 modifier = Modifier.testTag("go-live-button")) { Text("Go live") }
+                        }
+                        if (session.canScore) {
+                            androidx.compose.material3.ExtendedFloatingActionButton(onClick = { newMatch = true },
+                                modifier = Modifier.testTag("new-match-button")) { Text("New match") }
                         }
                         androidx.compose.material3.ExtendedFloatingActionButton(onClick = scan,
                             modifier = Modifier.testTag("scan-qr-button")) { Text("Scan QR") }
