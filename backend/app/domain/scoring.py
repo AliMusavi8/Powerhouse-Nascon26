@@ -6,8 +6,20 @@ dismissal limits, best-of, draw policy.
 from ..errors import ApiError, conflict, not_found, validation
 from .validate import is_id, is_int
 
-EVENT_TYPES = ("match_init", "match_start", "score", "discipline", "tiebreak_winner", "match_end", "compensation")
+EVENT_TYPES = ("match_init", "match_start", "score", "discipline", "tiebreak_winner", "match_end", "compensation",
+               "match_postponed", "match_cancelled", "match_abandoned", "match_status")
 COMPENSABLE = ("score", "discipline", "tiebreak_winner")
+# Phase II: notice states that re-route dynamic QR codes (spec 5.6).
+NOTICE_EVENTS = {"match_postponed": "postponed", "match_cancelled": "cancelled", "match_abandoned": "abandoned"}
+NOTICE_STATES = ("postponed", "cancelled", "abandoned")
+
+
+def notice_state(type_: str, payload: dict) -> str | None:
+    if type_ in NOTICE_EVENTS:
+        return NOTICE_EVENTS[type_]
+    if type_ == "match_status":
+        return payload.get("status") if payload.get("status") in NOTICE_STATES else None
+    return None
 
 
 def validate_envelope(body: dict) -> None:
@@ -44,13 +56,14 @@ class Log:
         for e in events:
             if e["type"] == "compensation":
                 self.compensated_by[e["payload"]["compensates"]] = e["event_id"]
-        types = [e["type"] for e in events]
-        if "match_end" in types:
-            self.status = "completed"
-        elif "match_start" in types:
-            self.status = "in_progress"
-        else:
-            self.status = "upcoming"
+        self.status = "upcoming"
+        for e in events:
+            if e["type"] == "match_start":
+                self.status = "in_progress"
+            elif e["type"] == "match_end":
+                self.status = "completed"
+            elif notice_state(e["type"], e["payload"]):
+                self.status = notice_state(e["type"], e["payload"])
 
     def active(self, type_: str):
         return [e for e in self.events if e["type"] == type_ and e["event_id"] not in self.compensated_by]
@@ -104,8 +117,14 @@ def check_event(log: Log, body: dict) -> None:
         if "reason" in p and p["reason"] is not None and not isinstance(p["reason"], str):
             raise validation("reason")
 
+    if type_ in NOTICE_EVENTS or type_ == "match_status":
+        if type_ == "match_status" and p.get("status") not in NOTICE_STATES:
+            raise validation("status")
+        if log.status not in ("upcoming", "in_progress", "postponed"):
+            raise conflict("ILLEGAL_TRANSITION", f"Cannot change a match that is {log.status}.", status=log.status)
+        return
     if type_ == "match_start":
-        if log.status != "upcoming":
+        if log.status not in ("upcoming", "postponed"):
             raise conflict("ILLEGAL_TRANSITION", f"Cannot start a match that is {log.status}.", status=log.status)
         return
     if type_ in ("score", "discipline", "tiebreak_winner"):

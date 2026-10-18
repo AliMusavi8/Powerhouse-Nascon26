@@ -38,5 +38,24 @@ def _offer(q: asyncio.Queue, message: dict) -> None:
         q.put_nowait(message)
 
 
+_connections = 0
+
+
+def connection_opened() -> None:
+    global _connections
+    with _lock:
+        _connections += 1
+
+
+def connection_closed() -> None:
+    global _connections
+    with _lock:
+        _connections = max(0, _connections - 1)
+
+
+def connection_count() -> int:
+    return _connections
+
+
 def publish_match(match_id: str) -> None:
     publish("match:" + match_id, {"type": "match_updated", "match_id": match_id})

@@ -5,7 +5,7 @@
 set -e
 cd "$(dirname "$0")"
 
-DEPS="fastapi==0.115.0 psycopg[binary]==3.2.3 psycopg-pool==3.2.3 redis==5.0.8 PyJWT==2.9.0 fpdf2==2.8.1 pytest pytest-cov pypdf requests"
+DEPS="segno==1.6.1 fastapi==0.115.0 psycopg[binary]==3.2.3 psycopg-pool==3.2.3 redis==5.0.8 PyJWT==2.9.0 fpdf2==2.8.1 pytest pytest-cov pypdf requests"
 
 if python3 -c "import pytest, pytest_cov, fastapi, psycopg, jwt, fpdf, redis" >/dev/null 2>&1; then
   PY=python3
