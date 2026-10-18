@@ -35,7 +35,9 @@
     { "player_id": "player-alpha-2", "tenant_id": "tenant-alpha", "club_id": "club-alpha-2", "name": "Bilal Ahmed",
       "profile": { "position": "gk", "role": "starter", "number": 1 } },
     { "player_id": "player-beta-1", "tenant_id": "tenant-beta", "club_id": "club-beta-1", "name": "Chaudhry Fahad",
-      "profile": { "position": "df", "role": "starter", "number": 4 } }
+      "profile": { "position": "df", "role": "starter", "number": 4 } },
+    { "player_id": "player-beta-2", "tenant_id": "tenant-beta", "club_id": "club-beta-1", "name": "Danish Iqbal",
+      "profile": { "position": "mf", "role": "starter", "number": 8 } }
   ],
   "products": [
     { "product_id": "prod-jersey-001", "tenant_id": "tenant-alpha", "club_id": "club-alpha-1",

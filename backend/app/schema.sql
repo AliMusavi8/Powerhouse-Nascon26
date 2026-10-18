@@ -185,3 +185,116 @@ CREATE TABLE IF NOT EXISTS sync_actions (
     result    JSONB NOT NULL,
     PRIMARY KEY (device_id, action_id)
 );
+
+-- ================================================================ Phase II
+
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS status_override TEXT;
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS live_stream_key TEXT;
+
+-- Creator stream keys. At most one active key per player.
+CREATE TABLE IF NOT EXISTS stream_keys (
+    stream_key TEXT PRIMARY KEY,
+    player_id  TEXT NOT NULL,
+    label      TEXT NOT NULL,
+    status     TEXT NOT NULL,
+    seq        BIGSERIAL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    revoked_at TIMESTAMPTZ
+);
+CREATE UNIQUE INDEX IF NOT EXISTS stream_keys_one_active ON stream_keys (player_id) WHERE status = 'active';
+
+CREATE TABLE IF NOT EXISTS costream_sessions (
+    session_id TEXT PRIMARY KEY,
+    body_hash  TEXT NOT NULL,
+    state      JSONB NOT NULL,
+    response   JSONB NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Dynamic QR: the short code never changes, the target route is computed at scan time.
+CREATE TABLE IF NOT EXISTS qr_codes (
+    entity_id   TEXT PRIMARY KEY,
+    entity_type TEXT NOT NULL,
+    short_code  TEXT NOT NULL UNIQUE,
+    scan_count  BIGINT NOT NULL DEFAULT 0,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Privacy-safe scan telemetry (NFR-9): no IP address, no user agent, no cookies.
+CREATE TABLE IF NOT EXISTS qr_scan_stats (
+    entity_id     TEXT NOT NULL,
+    device_family TEXT NOT NULL,
+    bucket        TEXT NOT NULL,
+    count         BIGINT NOT NULL DEFAULT 0,
+    PRIMARY KEY (entity_id, device_family, bucket)
+);
+
+CREATE TABLE IF NOT EXISTS guest_tokens (
+    guest_token     TEXT PRIMARY KEY,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    expires_at      TIMESTAMPTZ,
+    cart            JSONB NOT NULL DEFAULT '[]',
+    merged_user_id  TEXT,
+    merged_hash     TEXT,
+    revoked         BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE TABLE IF NOT EXISTS carts (
+    user_id    TEXT NOT NULL,
+    variant_id TEXT NOT NULL,
+    quantity   INTEGER NOT NULL CHECK (quantity > 0),
+    ord        BIGSERIAL,
+    PRIMARY KEY (user_id, variant_id)
+);
+
+CREATE TABLE IF NOT EXISTS chat_rooms (
+    chat_room_id TEXT PRIMARY KEY,
+    seq          BIGINT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS chat_messages (
+    chat_room_id TEXT NOT NULL,
+    seq          BIGINT NOT NULL,
+    message_id   TEXT NOT NULL,
+    sender       TEXT NOT NULL,
+    text         TEXT NOT NULL,
+    flagged      BOOLEAN NOT NULL,
+    reason       TEXT,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (chat_room_id, seq)
+);
+
+CREATE TABLE IF NOT EXISTS moderation_state (
+    chat_room_id TEXT NOT NULL,
+    user_id      TEXT NOT NULL,
+    kind         TEXT NOT NULL,
+    ord          BIGSERIAL,
+    PRIMARY KEY (chat_room_id, user_id, kind)
+);
+
+-- Dead-letter queue for notifications that failed after the bounded retries.
+CREATE TABLE IF NOT EXISTS dlq (
+    id         BIGSERIAL PRIMARY KEY,
+    event_id   TEXT NOT NULL UNIQUE,
+    type       TEXT NOT NULL,
+    target     TEXT,
+    payload    JSONB NOT NULL DEFAULT '{}',
+    attempts   INTEGER NOT NULL,
+    last_error TEXT,
+    failed_at  TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS follows (
+    follower_id TEXT NOT NULL,
+    athlete_id  TEXT NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (follower_id, athlete_id)
+);
+
+CREATE TABLE IF NOT EXISTS vods (
+    vod_id     TEXT PRIMARY KEY,
+    stream_key TEXT NOT NULL,
+    player_id  TEXT,
+    object_key TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);

@@ -16,6 +16,9 @@ TABLES = [
     "roster_leagues", "squads", "registrations", "roster_live_matches", "roster_audit",
     "roster_requests", "products", "variants", "discount_codes", "orders", "order_events",
     "sync_actions",
+    # Phase II
+    "stream_keys", "costream_sessions", "qr_codes", "qr_scan_stats", "guest_tokens", "carts", "chat_rooms",
+    "chat_messages", "moderation_state", "dlq", "follows", "vods",
 ]
 
 

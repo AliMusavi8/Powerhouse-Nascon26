@@ -100,6 +100,25 @@ async def _rate_limit(request: Request, call_next):
     return await call_next(request)
 
 
+class GuestWriteGuard:
+    """FR-4.3: any write with a guest_* bearer is rejected (403) before routing or validation."""
+
+    def __init__(self, app):
+        self.inner = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http" and scope["method"] != "GET":
+            from .domain.guest import bearer, write_rejection
+            auth = next((v.decode("latin-1") for k, v in scope["headers"] if k == b"authorization"), None)
+            err = write_rejection(scope["method"], scope["path"], bearer(auth))
+            if err is not None:
+                await JSONResponse(status_code=err.status, content=err.body())(scope, receive, send)
+                return
+        await self.inner(scope, receive, send)
+
+
+app.add_middleware(GuestWriteGuard)
+
 app.include_router(audit.router)
 app.include_router(rbac.router)
 app.include_router(api.router)

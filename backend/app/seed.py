@@ -67,6 +67,7 @@ def reset(seed: int = 42, stock: dict | None = None) -> dict:
                  u.get("league_id"), u.get("club_id"), u.get("player_id")))
         from . import demo  # demo content for the mobile app (ids prefixed "demo-")
         demo.seed(cur)
+        _seed_day2(cur)
         cur.execute("INSERT INTO meta (key, value) VALUES ('seed', %s)", (J(seed),))
         cur.execute("INSERT INTO meta (key, value) VALUES ('seeded', %s)", (J(True),))
     return {
@@ -76,6 +77,27 @@ def reset(seed: int = 42, stock: dict | None = None) -> dict:
         "tenants": [t["tenant_id"] for t in data["tenants"]],
         "stock": stock_map,
     }
+
+
+DAY2_QR = [("match-m1", "match", "m1-live"), ("player-alpha-1", "player", "p-alpha-1"),
+           ("club-alpha-1", "club", "c-alpha-1")]
+DAY2_GUEST_TOKEN = "guest_anon_tok_7721"
+
+
+def _seed_day2(cur) -> None:
+    """Phase II baseline (spec 5.2): match-m1 live at 1-0, QR mappings, the anonymous guest token."""
+    from .services.matches import _append
+    cur.execute("INSERT INTO matches (match_id, sport_id, league_id, home_team_id, away_team_id, scheduled_at, venue,"
+                " pinned_product_id) VALUES ('match-m1','football','league-alpha-1','club-alpha-1','club-alpha-2',"
+                " '2026-10-18T10:00:00Z','Alpha Arena','prod-jersey-001')")
+    _append(cur, {"event_id": "match-m1-start", "match_id": "match-m1", "type": "match_start", "payload": {}})
+    _append(cur, {"event_id": "match-m1-g1", "match_id": "match-m1", "type": "score",
+                  "payload": {"team_id": "club-alpha-1", "event_type": "goal"}})
+    for entity_id, entity_type, code in DAY2_QR:
+        cur.execute("INSERT INTO qr_codes (entity_id, entity_type, short_code) VALUES (%s,%s,%s)",
+                    (entity_id, entity_type, code))
+    cur.execute("INSERT INTO guest_tokens (guest_token, expires_at) VALUES (%s, now() + interval '30 days')",
+                (DAY2_GUEST_TOKEN,))
 
 
 def current_seed(cur) -> int:
